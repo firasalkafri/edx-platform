@@ -24,6 +24,7 @@ from edxmako.shortcuts import render_to_response
 
 from . import cohorts
 from lms.djangoapps.django_comment_client.utils import get_discussion_category_map, get_discussion_categories_ids
+from lms.djangoapps.django_comment_client.constants import TYPE_ENTRY
 from .models import CourseUserGroup, CourseUserGroupPartitionGroup, CohortMembership
 
 log = logging.getLogger(__name__)
@@ -479,11 +480,11 @@ def cohort_discussion_topics(request, course_key_string):
     course_wide_children = []
     inline_children = []
 
-    for name in discussion_category_map['children']:
-        if name in course_wide_entries:
-            course_wide_children.append(name)
+    for name, c_type in discussion_category_map['children']:
+        if name in course_wide_entries and c_type == TYPE_ENTRY:
+            course_wide_children.append([name, c_type])
         else:
-            inline_children.append(name)
+            inline_children.append([name, c_type])
 
     discussion_topics['course_wide_discussions'] = {
         'entries': course_wide_entries,
