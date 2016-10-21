@@ -6,10 +6,11 @@
             'underscore',
             'backbone',
             'common/js/discussion/utils',
+            'discussion/js/views/discussion_board_view',
             'common/js/discussion/views/discussion_thread_list_view',
             'common/js/discussion/views/discussion_thread_view'
         ],
-        function(_, Backbone, DiscussionUtil, DiscussionThreadListView, DiscussionThreadView) {
+        function(_, Backbone, DiscussionUtil, DiscussionBoardView, DiscussionThreadListView, DiscussionThreadView) {
             var DiscussionRouter = Backbone.Router.extend({
                 routes: {
                     '': 'allThreads',
@@ -21,14 +22,16 @@
                     _.bindAll(this, 'allThreads', 'showThread');
                     this.courseId = options.courseId;
                     this.discussion = options.discussion;
-                    this.course_settings = options.courseSettings;
+                    this.course_settings = new window.DiscussionCourseSettings(options.course_settings);
                     this.newPostView = options.newPostView;
-                    this.nav = new DiscussionThreadListView({
+                    this.breadcrumbs = options.breadcrumbs;
+
+                    this.discussionBoardView = new DiscussionBoardView({
                         collection: this.discussion,
-                        el: $('.forum-nav'),
-                        courseSettings: this.course_settings
-                    });
-                    this.nav.render();
+                        el: $('.discussion-board'),
+                        courseSettings: this.course_settings,
+                        discussionThreadListView: this.discussionThreadListView
+                    }).render();
                 },
 
                 start: function() {
@@ -41,10 +44,18 @@
                     });
 
                     // Automatically navigate when the user selects threads
-                    this.nav.on('thread:selected', _.bind(this.navigateToThread, this));
-                    this.nav.on('thread:removed', _.bind(this.navigateToAllThreads, this));
-                    this.nav.on('threads:rendered', _.bind(this.setActiveThread, this));
-                    this.nav.on('thread:created', _.bind(this.navigateToThread, this));
+                    this.discussionBoardView.discussionThreadListView.on(
+                        'thread:selected', _.bind(this.navigateToThread, this)
+                    );
+                    this.discussionBoardView.discussionThreadListView.on(
+                        'thread:removed', _.bind(this.navigateToAllThreads, this)
+                    );
+                    this.discussionBoardView.discussionThreadListView.on(
+                        'threads:rendered', _.bind(this.setActiveThread, this)
+                    );
+                    this.discussionBoardView.discussionThreadListView.on(
+                        'thread:created', _.bind(this.navigateToThread, this)
+                    );
 
                     Backbone.history.start({
                         pushState: true,
@@ -57,15 +68,15 @@
                 },
 
                 allThreads: function() {
-                    this.nav.updateSidebar();
-                    return this.nav.goHome();
+                    this.discussionBoardView.updateSidebar();
+                    return this.discussionBoardView.goHome();
                 },
 
                 setActiveThread: function() {
                     if (this.thread) {
-                        return this.nav.setActiveThread(this.thread.get('id'));
+                        return this.discussionBoardView.discussionThreadListView.setActiveThread(this.thread.get('id'));
                     } else {
-                        return this.nav.goHome;
+                        return this.discussionBoardView.goHome;
                     }
                 },
 
@@ -97,14 +108,13 @@
                     });
                     this.main.render();
                     this.main.on('thread:responses:rendered', function() {
-                        return self.nav.updateSidebar();
+                        return self.discussionBoardView.updateSidebar();
                     });
                     return this.thread.on('thread:thread_type_updated', this.showMain);
                 },
 
                 navigateToThread: function(threadId) {
-                    var thread;
-                    thread = this.discussion.get(threadId);
+                    var thread = this.discussion.get(threadId);
                     return this.navigate('' + (thread.get('commentable_id')) + '/threads/' + threadId, {
                         trigger: true
                     });
