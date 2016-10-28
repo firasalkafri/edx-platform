@@ -1007,6 +1007,7 @@ def set_score(user_id, usage_key, score, max_score):
         student_module.grade = score
         student_module.max_grade = max_score
         student_module.save()
+    return student_module
 
 
 def get_score(user_id, usage_key):

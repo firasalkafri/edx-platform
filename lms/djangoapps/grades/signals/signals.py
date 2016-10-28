@@ -19,6 +19,7 @@ PROBLEM_SCORE_CHANGED = Signal(
         'points_possible',  # Maximum score available for the exercise
         'only_if_higher',   # Boolean indicating whether updates should be
                             # made only if the new score is higher than previous.
+        'modified_time',  # DEBUG
     ]
 )
 
