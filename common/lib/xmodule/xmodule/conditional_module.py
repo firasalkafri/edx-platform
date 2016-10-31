@@ -147,8 +147,13 @@ class ConditionalModule(ConditionalFields, XModule, StudioEditableModule):
 
     @lazy
     def required_modules(self):
-        return [self.system.get_module(descriptor) for
-                descriptor in self.descriptor.get_required_module_descriptors()]
+        result = []
+        for descriptor in self.descriptor.get_required_module_descriptors():
+            module = self.system.get_module(descriptor)
+            if module:
+                result.append(module)
+
+        return result
 
     def is_condition_satisfied(self):
         attr_name = self.conditions_map[self.conditional_attr]
