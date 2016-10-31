@@ -8,13 +8,12 @@
         'edx-ui-toolkit/js/utils/html-utils',
         'edx-ui-toolkit/js/utils/constants',
         'common/js/discussion/utils',
-        'discussion/js/discussion_router',
         'common/js/discussion/views/discussion_thread_list_view',
         'discussion/js/views/discussion_fake_breadcrumbs',
         'discussion/js/views/discussion_search_view',
         'text!discussion/templates/discussion-home.underscore'
     ],
-    function(_, Backbone, HtmlUtils, Constants, DiscussionUtil, DiscussionRouter,
+    function(_, Backbone, HtmlUtils, Constants, DiscussionUtil,
         DiscussionThreadListView, DiscussionFakeBreadcrumbs, DiscussionSearchView, discussionHomeTemplate) {
         var DiscussionBoardView = Backbone.View.extend({
             events: {
@@ -31,28 +30,17 @@
                 'topic:selected': 'clearSearch'
             },
             initialize: function(options) {
-                var discussion, courseSettings, BreadcrumbsModel,
-                    threadPages = this.collection.pages,
-                    sortPreference = this.collection.sort_preference;
+                this.courseSettings = options.courseSettings;
                 this.sidebar_padding = 10;
                 this.current_search = '';
                 this.mode = 'all';
                 this.filterInputReset();
                 this.selectedTopic = $('.forum-nav-browse-menu-item:visible .forum-nav-browse-title.is-focused');
-                this.discussionThreadListView = options.discussionThreadListView;
-                this.displayedCollection = new Discussion(this.collection.models, {
-                    pages: this.collection.pages
-                });
-
-                discussion = new Discussion(this.displayedCollection.models, {
-                    pages: threadPages, sort: sortPreference}
-                );
-                courseSettings = new window.DiscussionCourseSettings(options.course_settings);
 
                 this.discussionThreadListView = new DiscussionThreadListView({
-                    collection: discussion,
-                    el: $('.discussion-thread-list-container'),
-                    courseSettings: courseSettings
+                    collection: options.discussion,
+                    el: this.$('.discussion-thread-list-container'),
+                    courseSettings: this.courseSettings
                 }).render();
 
                 // Initialize and render search box
@@ -61,8 +49,19 @@
                     discussionBoardView: this
                 }).render();
 
-                // Initialize and render breadcrumbs
-                BreadcrumbsModel = Backbone.Model.extend({
+                this.renderBreadcrumbs();
+                this.listenTo(this.model, 'change', this.render);
+                this.render();
+            },
+
+            render: function() {
+                $(window).bind('load scroll resize', this.updateSidebar);
+                this.showBrowseMenu(true);
+                return this;
+            },
+
+            renderBreadcrumbs: function() {
+                var BreadcrumbsModel = Backbone.Model.extend({
                     defaults: {
                         contents: []
                     }
@@ -77,15 +76,6 @@
                         }
                     }
                 }).render();
-
-                this.listenTo(this.model, 'change', this.render);
-                this.render();
-            },
-
-            render: function() {
-                $(window).bind('load scroll resize', this.updateSidebar);
-                this.showBrowseMenu(true);
-                return this;
             },
 
             isBrowseMenuVisible: function() {
@@ -178,7 +168,6 @@
                     .css('height', (sidebarHeight - headerHeight - browseFilterHeight - 2) + 'px');
             },
 
-            // TODO: move this to the router?
             goHome: function() {
                 var url = DiscussionUtil.urlFor('notifications_status', window.user.get('id'));
                 HtmlUtils.append(this.$('.forum-content').empty(), HtmlUtils.template(discussionHomeTemplate)({}));

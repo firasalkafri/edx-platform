@@ -6,9 +6,10 @@
             'jquery',
             'backbone',
             'discussion/js/discussion_router',
+            'discussion/js/views/discussion_board_view',
             'common/js/discussion/views/new_post_view'
         ],
-        function($, Backbone, DiscussionRouter, NewPostView) {
+        function($, Backbone, DiscussionRouter, DiscussionBoardView, NewPostView) {
             return function(options) {
                 var userInfo = options.user_info,
                     sortPreference = options.sort_preference,
@@ -19,6 +20,7 @@
                     discussion,
                     courseSettings,
                     newPostView,
+                    discussionBoardView,
                     router,
                     routerEvents;
 
@@ -33,11 +35,18 @@
                 discussion = new window.Discussion(threads, {pages: threadPages, sort: sortPreference});
                 courseSettings = new window.DiscussionCourseSettings(options.course_settings);
 
+                discussionBoardView = new DiscussionBoardView({
+                    el: $('.discussion-board'),
+                    discussion: discussion,
+                    courseSettings: courseSettings
+                });
+
                 // Set up the router to manage the page's history
                 router = new DiscussionRouter({
                     courseId: options.courseId,
                     discussion: discussion,
-                    courseSettings: courseSettings
+                    courseSettings: courseSettings,
+                    discussionBoardView: discussionBoardView
                 });
 
                 // Create the new post view
@@ -48,7 +57,6 @@
                     mode: 'tab'
                 });
                 newPostView.render();
-
                 router.newPostView = newPostView;
 
                 // Start the router

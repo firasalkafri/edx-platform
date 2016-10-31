@@ -7,10 +7,9 @@
             'backbone',
             'common/js/discussion/utils',
             'discussion/js/views/discussion_board_view',
-            'common/js/discussion/views/discussion_thread_list_view',
             'common/js/discussion/views/discussion_thread_view'
         ],
-        function(_, Backbone, DiscussionUtil, DiscussionBoardView, DiscussionThreadListView, DiscussionThreadView) {
+        function(_, Backbone, DiscussionUtil, DiscussionThreadListView, DiscussionThreadView) {
             var DiscussionRouter = Backbone.Router.extend({
                 routes: {
                     '': 'allThreads',
@@ -23,15 +22,7 @@
                     this.courseId = options.courseId;
                     this.discussion = options.discussion;
                     this.course_settings = new window.DiscussionCourseSettings(options.course_settings);
-                    this.newPostView = options.newPostView;
-                    this.breadcrumbs = options.breadcrumbs;
-
-                    this.discussionBoardView = new DiscussionBoardView({
-                        collection: this.discussion,
-                        el: $('.discussion-board'),
-                        courseSettings: this.course_settings,
-                        discussionThreadListView: this.discussionThreadListView
-                    }).render();
+                    this.discussionBoardView = options.discussionBoardView;
                 },
 
                 start: function() {
@@ -97,8 +88,8 @@
                     if (!($('.forum-content').is(':visible'))) {
                         $('.forum-content').fadeIn();
                     }
-                    if (this.newPostView.$el.is(':visible')) {
-                        this.newPostView.$el.fadeOut();
+                    if ($('.new-post-article').is(':visible')) {
+                        $('.new-post-article').fadeOut();
                     }
                     this.main = new DiscussionThreadView({
                         el: $('.forum-content'),
@@ -145,6 +136,7 @@
                         }
                     });
                 }
+
             });
 
             return DiscussionRouter;

@@ -141,6 +141,20 @@
              * @returns {Backbone.Model}
              */
 
+            DiscussionThreadListView.prototype.addSearchAlert = function(message, cssClass) {
+                var m = new Backbone.Model({message: message, css_class: cssClass || ''});
+                this.searchAlertCollection.add(m);
+                return m;
+            };
+
+            DiscussionThreadListView.prototype.removeSearchAlert = function(searchAlert) {
+                return this.searchAlertCollection.remove(searchAlert);
+            };
+
+            DiscussionThreadListView.prototype.clearSearchAlerts = function() {
+                return this.searchAlertCollection.reset();
+            };
+
             DiscussionThreadListView.prototype.reloadDisplayedCollection = function(thread) {
                 var active, $content, $currentElement, threadId;
                 this.clearSearchAlerts();
@@ -241,49 +255,6 @@
 
             DiscussionThreadListView.prototype.getLoadingContent = function(srText) {
                 return edx.HtmlUtils.template($('#nav-loading-template').html())({srText: srText});
-            };
-
-            DiscussionThreadListView.prototype.selectTopic = function($target) {
-                var allItems, discussionIds, $item;
-                $item = $target.closest('.forum-nav-browse-menu-item');
-
-                if ($item.hasClass('forum-nav-browse-menu-all')) {
-                    this.discussionIds = '';
-                    this.$('.forum-nav-filter-cohort').show();
-                    return this.retrieveAllThreads();
-                } else if ($item.hasClass('forum-nav-browse-menu-following')) {
-                    this.retrieveFollowed();
-                    return this.$('.forum-nav-filter-cohort').hide();
-                } else {
-                    allItems = $item.find('.forum-nav-browse-menu-item').andSelf();
-                    discussionIds = allItems.filter('[data-discussion-id]').map(function(i, elem) {
-                        return $(elem).data('discussion-id');
-                    }).get();
-                    this.retrieveDiscussions(discussionIds);
-                    return this.$('.forum-nav-filter-cohort').toggle($item.data('cohorted') === true);
-                }
-            };
-
-            DiscussionThreadListView.prototype.retrieveAllThreads = function() {
-                this.mode = 'all';
-                return this.retrieveFirstPage();
-            };
-
-            DiscussionThreadListView.prototype.retrieveFollowed = function() {
-                this.mode = 'followed';
-                return this.retrieveFirstPage();
-            };
-
-            DiscussionThreadListView.prototype.retrieveDiscussions = function(discussionIds) {
-                this.discussionIds = discussionIds.join(',');
-                this.mode = 'commentables';
-                return this.retrieveFirstPage();
-            };
-
-            DiscussionThreadListView.prototype.retrieveFirstPage = function(event) {
-                this.collection.current_page = 0;
-                this.collection.reset();
-                return this.discussionThreadListView.loadMorePages(event);
             };
 
             DiscussionThreadListView.prototype.loadMorePages = function(event) {
@@ -391,6 +362,27 @@
                     .prepend($srElem);
             };
 
+            DiscussionThreadListView.prototype.selectTopic = function($target) {
+                var allItems, discussionIds, $item;
+                $item = $target.closest('.forum-nav-browse-menu-item');
+
+                if ($item.hasClass('forum-nav-browse-menu-all')) {
+                    this.discussionIds = '';
+                    this.$('.forum-nav-filter-cohort').show();
+                    return this.retrieveAllThreads();
+                } else if ($item.hasClass('forum-nav-browse-menu-following')) {
+                    this.retrieveFollowed();
+                    return this.$('.forum-nav-filter-cohort').hide();
+                } else {
+                    allItems = $item.find('.forum-nav-browse-menu-item').andSelf();
+                    discussionIds = allItems.filter('[data-discussion-id]').map(function(i, elem) {
+                        return $(elem).data('discussion-id');
+                    }).get();
+                    this.retrieveDiscussions(discussionIds);
+                    return this.$('.forum-nav-filter-cohort').toggle($item.data('cohorted') === true);
+                }
+            };
+
             DiscussionThreadListView.prototype.chooseFilter = function() {
                 this.filter = $('.forum-nav-filter-main-control :selected').val();
                 return this.retrieveFirstPage();
@@ -446,20 +438,6 @@
                 // trigger this event so the breadcrumbs can update as well
                 this.trigger('search:initiated');
                 this.searchFor($searchInput.val(), $searchInput);
-            };
-
-            DiscussionThreadListView.prototype.addSearchAlert = function(message, cssClass) {
-                var m = new Backbone.Model({message: message, css_class: cssClass || ''});
-                this.searchAlertCollection.add(m);
-                return m;
-            };
-
-            DiscussionThreadListView.prototype.removeSearchAlert = function(searchAlert) {
-                return this.searchAlertCollection.remove(searchAlert);
-            };
-
-            DiscussionThreadListView.prototype.clearSearchAlerts = function() {
-                return this.searchAlertCollection.reset();
             };
 
             DiscussionThreadListView.prototype.searchFor = function(text, $searchInput) {
@@ -566,9 +544,7 @@
                             message = edx.HtmlUtils.interpolateHtml(
                                 gettext('Show posts by {username}.'), {username: username}
                             );
-                            return self.addSearchAlert(message, 'search-by-user');
-                        } else {
-                            return false;
+                            self.addSearchAlert(message, 'search-by-user');
                         }
                     }
                 });
@@ -577,6 +553,11 @@
             DiscussionThreadListView.prototype.clearFilters = function() {
                 this.$('.forum-nav-filter-main-control').val('all');
                 return this.$('.forum-nav-filter-cohort-control').val('all');
+            };
+
+            DiscussionThreadListView.prototype.retrieveFollowed = function() {
+                this.mode = 'followed';
+                return this.retrieveFirstPage();
             };
 
             DiscussionThreadListView.prototype.updateEmailNotifications = function() {
