@@ -3,7 +3,6 @@
 Test for lms courseware app, module render unit
 """
 import ddt
-from datetime import datetime
 import itertools
 import json
 from nose.plugins.attrib import attr

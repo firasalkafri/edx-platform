@@ -68,6 +68,11 @@ class RecalculateSubsectionGradeTest(ModuleStoreTestCase):
 
     @contextmanager
     def mock_student_module(self, timedelta_in_seconds=1):
+        """
+        Mocks the student module needed by the SCORE_PUBLISHED signal
+        handler. By default, sets the module's modified date in the past
+        (the happy path).
+        """
         mock_student_module_return = MagicMock()
         mock_student_module_return.modified = datetime.now() - timedelta(seconds=timedelta_in_seconds)
         mock_student_module_return.modified = timezone.make_aware(mock_student_module_return.modified, timezone=None)
@@ -153,7 +158,7 @@ class RecalculateSubsectionGradeTest(ModuleStoreTestCase):
 
     @ddt.data(
         (ModuleStoreEnum.Type.mongo, 1),
-         (ModuleStoreEnum.Type.split, 0),
+        (ModuleStoreEnum.Type.split, 0),
     )
     @ddt.unpack
     def test_subsection_grade_updated(self, default_store, added_queries):
@@ -246,6 +251,6 @@ class RecalculateSubsectionGradeTest(ModuleStoreTestCase):
     @patch('lms.djangoapps.grades.tasks.recalculate_subsection_grade.retry')
     def test_retry_subsection_grade_on_update_not_complete(self, mock_retry):
         self.set_up_course()
-        with self.mock_student_module(timedelta_in_seconds=-1):
+        with self.mock_student_module(timedelta_in_seconds=10):
             recalculate_subsection_grade.apply(args=tuple(self.score_changed_kwargs.values()))
         self.assertTrue(mock_retry.called)
