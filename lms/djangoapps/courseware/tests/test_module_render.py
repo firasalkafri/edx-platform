@@ -3,6 +3,7 @@
 Test for lms courseware app, module render unit
 """
 import ddt
+from datetime import datetime
 import itertools
 import json
 from nose.plugins.attrib import attr
@@ -1835,6 +1836,11 @@ class TestXmoduleRuntimeEvent(TestSubmittingProblems):
     def test_score_change_signal(self, send_mock):
         """Test that a Django signal is generated when a score changes"""
         self.set_module_grade_using_publish(self.grade_dict)
+        user_module, _ = StudentModule.objects.get_or_create(
+            student_id=self.student_user.id,
+            module_state_key=self.problem.location,
+            course_id=self.course.location.course_key
+        )
         expected_signal_kwargs = {
             'sender': None,
             'points_possible': self.grade_dict['max_value'],
@@ -1843,6 +1849,7 @@ class TestXmoduleRuntimeEvent(TestSubmittingProblems):
             'course_id': unicode(self.course.id),
             'usage_id': unicode(self.problem.location),
             'only_if_higher': None,
+            'modified_time': user_module.modified.strftime("%y/%m/%d/%H/%M/%S/%f")
         }
         send_mock.assert_called_with(**expected_signal_kwargs)
 

@@ -106,7 +106,7 @@ def score_published_handler(sender, block, user, raw_earned, raw_possible, only_
 
     if update_score:
         module = set_score(user.id, block.location, raw_earned, raw_possible)
-
+        modified_time = module.modified.strftime("%y/%m/%d/%H/%M/%S/%f") if module else None
         PROBLEM_SCORE_CHANGED.send(
             sender=None,
             points_earned=raw_earned,
@@ -115,7 +115,7 @@ def score_published_handler(sender, block, user, raw_earned, raw_possible, only_
             course_id=unicode(block.location.course_key),
             usage_id=unicode(block.location),
             only_if_higher=only_if_higher,
-            modified_time=module.modified.strftime("%y/%m/%d/%H/%M/%S/%f")
+            modified_time=modified_time
         )
     return update_score
 
