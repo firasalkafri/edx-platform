@@ -251,6 +251,6 @@ class RecalculateSubsectionGradeTest(ModuleStoreTestCase):
     @patch('lms.djangoapps.grades.tasks.recalculate_subsection_grade.retry')
     def test_retry_subsection_grade_on_update_not_complete(self, mock_retry):
         self.set_up_course()
-        with self.mock_student_module(timedelta_in_seconds=10):
+        with self.mock_student_module(timedelta_in_seconds=-10):
             recalculate_subsection_grade.apply(args=tuple(self.score_changed_kwargs.values()))
         self.assertTrue(mock_retry.called)
