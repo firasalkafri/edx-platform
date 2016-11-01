@@ -1,4 +1,4 @@
-/* globals _, Backbone, Content, Discussion, DiscussionUtil */
+/* globals _, Backbone, Content, Discussion, DiscussionUtil, DiscussionThreadView, DiscussionThreadListView */
 (function() {
     'use strict';
     /* eslint-disable */
@@ -21,8 +21,8 @@
         /* eslint-enable */
 
     if (typeof Backbone !== 'undefined' && Backbone !== null) {
-        this.DiscussionThreadListView = (function(_super) { // eslint-disable-line no-use-before-define
-            __extends(DiscussionThreadListView, _super); // eslint-disable-line no-use-before-define
+        this.DiscussionThreadListView = (function(_super) {
+            __extends(DiscussionThreadListView, _super);
 
             function DiscussionThreadListView() {
                 var self = this;
@@ -140,11 +140,10 @@
              *                   of different types differently (i.e. other background, completely hide, etc.)
              * @returns {Backbone.Model}
              */
-
             DiscussionThreadListView.prototype.addSearchAlert = function(message, cssClass) {
-                var m = new Backbone.Model({message: message, css_class: cssClass || ''});
-                this.searchAlertCollection.add(m);
-                return m;
+                var searchAlertModel = new Backbone.Model({message: message, css_class: cssClass || ''});
+                this.searchAlertCollection.add(searchAlertModel);
+                return searchAlertModel;
             };
 
             DiscussionThreadListView.prototype.removeSearchAlert = function(searchAlert) {
@@ -165,9 +164,7 @@
                 $currentElement.replaceWith($content);
                 this.showMetadataAccordingToSort();
                 if (active) {
-                    return this.setActiveThread(threadId);
-                } else {
-                    return false;
+                    this.setActiveThread(threadId);
                 }
             };
 
@@ -205,9 +202,7 @@
                 this.displayedCollection.on('thread:remove', this.renderThreads);
                 this.displayedCollection.on('change:commentable_id', function() {
                     if (self.mode === 'commentables') {
-                        return self.retrieveDiscussions(self.discussionIds.split(','));
-                    } else {
-                        return false;
+                        self.retrieveDiscussions(self.discussionIds.split(','));
                     }
                 });
                 this.renderThreads();
@@ -224,7 +219,7 @@
                 }
                 this.showMetadataAccordingToSort();
                 this.renderMorePages();
-                return this.trigger('threads:rendered');
+                this.trigger('threads:rendered');
             };
 
             DiscussionThreadListView.prototype.showMetadataAccordingToSort = function() {

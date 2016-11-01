@@ -261,23 +261,21 @@
                     break;
 
                 default:
-                    break;
                 }
-                return true;
             },
 
             filterTopics: function() {
-                var items, query, filteredItems,
+                var $items, query, filteredItems,
                     self = this;
                 query = this.$('.forum-nav-browse-filter-input').val();
-                items = this.$('.forum-nav-browse-menu-item');
+                $items = this.$('.forum-nav-browse-menu-item');
                 if (query.length === 0) {
-                    items.find('.forum-nav-browse-title.is-focused').removeClass('is-focused');
-                    return items.show();
+                    $items.find('.forum-nav-browse-title.is-focused').removeClass('is-focused');
+                    return $items.show();
                 } else {
                     if (self.filterEnabled) {
-                        items.hide();
-                        filteredItems = items.each(function(i, item) {
+                        $items.hide();
+                        filteredItems = $items.each(function(i, item) {
                             var path, pathText,
                                 $item = $(item);
                             if (!$item.is(':visible')) {
@@ -286,10 +284,9 @@
                                     return pathText.search(term.toLowerCase()) !== -1;
                                 })) {
                                     path = $item.parents('.forum-nav-browse-menu-item').andSelf();
-                                    return path.add($item.find('.forum-nav-browse-menu-item')).show();
+                                    path.add($item.find('.forum-nav-browse-menu-item')).show();
                                 }
                             }
-                            return filteredItems;
                         });
                     }
                     return filteredItems;

@@ -12,7 +12,7 @@ define(
     function($, Backbone, PageHelpers, DiscussionSpecHelper, constants, DiscussionBoardView, DiscussionSearchView) {
         'use strict';
 
-        xdescribe('Discussion Board View', function() {
+        describe('Discussion Board View', function() {
             var initializeDiscussionBoardView = function() { // eslint-disable-line no-unused-vars
                 DiscussionBoardView({
                     el: $('.discussion-board'),
@@ -55,7 +55,7 @@ define(
 
                 expectBrowseMenuVisible = function(isVisible) {
                     expect($('.forum-nav-browse-menu:visible').length).toEqual(isVisible ? 1 : 0);
-                    return expect($('.forum-nav-thread-list-wrapper:visible').length).toEqual(isVisible ? 0 : 1);
+                    expect($('.forum-nav-thread-list-wrapper:visible').length).toEqual(isVisible ? 0 : 1);
                 };
 
                 it('should be visible by default', function() {
@@ -65,22 +65,22 @@ define(
                 describe('when shown', function() {
                     it('should show again when header button is clicked', function() {
                         $('.forum-nav-browse').click();
-                        return expectBrowseMenuVisible(false);
+                        expectBrowseMenuVisible(false);
                     });
 
                     it('should hide when a click outside the menu occurs', function() {
                         $('.forum-nav-search-input').click();
-                        return expectBrowseMenuVisible(false);
+                        expectBrowseMenuVisible(false);
                     });
 
                     it('should hide when a category is clicked', function() {
                         $('.forum-nav-browse-title')[0].click();
-                        return expectBrowseMenuVisible(false);
+                        expectBrowseMenuVisible(false);
                     });
 
                     it('should still be shown when filter input is clicked', function() {
                         $('.forum-nav-browse-filter-input').click();
-                        return expectBrowseMenuVisible(true);
+                        expectBrowseMenuVisible(true);
                     });
 
                     describe('filtering', function() {
