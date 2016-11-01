@@ -317,7 +317,7 @@ class CourseGradeFactory(object):
         if not self._user_has_access_to_course(course_structure):
             raise PermissionDenied("User does not have access to this course")
         return (
-            self._get_saved_grade(course, course_structure) or
+            self.get_persisted(course, course_structure) or
             self._compute_and_update_grade(course, course_structure, read_only)
         )
 
@@ -328,6 +328,22 @@ class CourseGradeFactory(object):
         course_structure = get_course_blocks(self.student, course.location)
         self._compute_and_update_grade(course, course_structure)
 
+    def get_persisted(self, course, course_structure=None):
+        """
+        Returns the saved grade for the given course and student.
+        """
+        if not PersistentGradesEnabledFlag.feature_enabled(course.id):
+            return None
+
+        if course_structure is None:
+            course_structure = get_course_blocks(self.student, course.location)
+
+        return CourseGrade.load_persisted_grade(
+            self.student,
+            course,
+            course_structure
+        )
+
     def _compute_and_update_grade(self, course, course_structure, read_only=False):
         """
         Freshly computes and updates the grade for the student and course.
@@ -337,19 +353,6 @@ class CourseGradeFactory(object):
         course_grade = CourseGrade(self.student, course, course_structure)
         course_grade.compute_and_update(read_only)
         return course_grade
-
-    def _get_saved_grade(self, course, course_structure):  # pylint: disable=unused-argument
-        """
-        Returns the saved grade for the given course and student.
-        """
-        if not PersistentGradesEnabledFlag.feature_enabled(course.id):
-            return None
-
-        return CourseGrade.load_persisted_grade(
-            self.student,
-            course,
-            course_structure
-        )
 
     def _user_has_access_to_course(self, course_structure):
         """

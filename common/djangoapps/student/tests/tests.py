@@ -106,20 +106,40 @@ class CourseEndingTest(TestCase):
         )
 
         cert_status = {'status': 'generating', 'grade': '67', 'mode': 'honor'}
-        self.assertEqual(
-            _cert_info(user, course, cert_status, course_mode),
-            {
-                'status': 'generating',
-                'show_disabled_download_button': True,
-                'show_download_url': False,
-                'show_survey_button': True,
-                'survey_url': survey_url,
-                'grade': '67',
-                'mode': 'honor',
-                'linked_in_url': None,
-                'can_unenroll': False,
-            }
-        )
+        with patch('lms.djangoapps.grades.new.course_grade.CourseGradeFactory.get_persisted') as patch_persisted_grade:
+            patch_persisted_grade.return_value = Mock(percent=100)
+            self.assertEqual(
+                _cert_info(user, course, cert_status, course_mode),
+                {
+                    'status': 'generating',
+                    'show_disabled_download_button': True,
+                    'show_download_url': False,
+                    'show_survey_button': True,
+                    'survey_url': survey_url,
+                    'grade': '100',
+                    'mode': 'honor',
+                    'linked_in_url': None,
+                    'can_unenroll': False,
+                }
+            )
+
+        cert_status = {'status': 'generating', 'grade': '67', 'mode': 'honor'}
+        with patch('lms.djangoapps.grades.new.course_grade.CourseGradeFactory.get_persisted') as patch_persisted_grade:
+            patch_persisted_grade.return_value = None
+            self.assertEqual(
+                _cert_info(user, course, cert_status, course_mode),
+                {
+                    'status': 'generating',
+                    'show_disabled_download_button': True,
+                    'show_download_url': False,
+                    'show_survey_button': True,
+                    'survey_url': survey_url,
+                    'grade': '67',
+                    'mode': 'honor',
+                    'linked_in_url': None,
+                    'can_unenroll': False,
+                }
+            )
 
         download_url = 'http://s3.edx/cert'
         cert_status = {
@@ -128,41 +148,45 @@ class CourseEndingTest(TestCase):
             'mode': 'honor'
         }
 
-        self.assertEqual(
-            _cert_info(user, course, cert_status, course_mode),
-            {
-                'status': 'ready',
-                'show_disabled_download_button': False,
-                'show_download_url': True,
-                'download_url': download_url,
-                'show_survey_button': True,
-                'survey_url': survey_url,
-                'grade': '67',
-                'mode': 'honor',
-                'linked_in_url': None,
-                'can_unenroll': False,
-            }
-        )
+        with patch('lms.djangoapps.grades.new.course_grade.CourseGradeFactory.get_persisted') as patch_persisted_grade:
+            patch_persisted_grade.return_value = None
+            self.assertEqual(
+                _cert_info(user, course, cert_status, course_mode),
+                {
+                    'status': 'ready',
+                    'show_disabled_download_button': False,
+                    'show_download_url': True,
+                    'download_url': download_url,
+                    'show_survey_button': True,
+                    'survey_url': survey_url,
+                    'grade': '67',
+                    'mode': 'honor',
+                    'linked_in_url': None,
+                    'can_unenroll': False,
+                }
+            )
 
         cert_status = {
             'status': 'notpassing', 'grade': '67',
             'download_url': download_url,
             'mode': 'honor'
         }
-        self.assertEqual(
-            _cert_info(user, course, cert_status, course_mode),
-            {
-                'status': 'notpassing',
-                'show_disabled_download_button': False,
-                'show_download_url': False,
-                'show_survey_button': True,
-                'survey_url': survey_url,
-                'grade': '67',
-                'mode': 'honor',
-                'linked_in_url': None,
-                'can_unenroll': True,
-            }
-        )
+        with patch('lms.djangoapps.grades.new.course_grade.CourseGradeFactory.get_persisted') as patch_persisted_grade:
+            patch_persisted_grade.return_value = None
+            self.assertEqual(
+                _cert_info(user, course, cert_status, course_mode),
+                {
+                    'status': 'notpassing',
+                    'show_disabled_download_button': False,
+                    'show_download_url': False,
+                    'show_survey_button': True,
+                    'survey_url': survey_url,
+                    'grade': '67',
+                    'mode': 'honor',
+                    'linked_in_url': None,
+                    'can_unenroll': True,
+                }
+            )
 
         # Test a course that doesn't have a survey specified
         course2 = Mock(end_of_course_survey_url=None)
@@ -170,19 +194,21 @@ class CourseEndingTest(TestCase):
             'status': 'notpassing', 'grade': '67',
             'download_url': download_url, 'mode': 'honor'
         }
-        self.assertEqual(
-            _cert_info(user, course2, cert_status, course_mode),
-            {
-                'status': 'notpassing',
-                'show_disabled_download_button': False,
-                'show_download_url': False,
-                'show_survey_button': False,
-                'grade': '67',
-                'mode': 'honor',
-                'linked_in_url': None,
-                'can_unenroll': True,
-            }
-        )
+        with patch('lms.djangoapps.grades.new.course_grade.CourseGradeFactory.get_persisted') as patch_persisted_grade:
+            patch_persisted_grade.return_value = None
+            self.assertEqual(
+                _cert_info(user, course2, cert_status, course_mode),
+                {
+                    'status': 'notpassing',
+                    'show_disabled_download_button': False,
+                    'show_download_url': False,
+                    'show_survey_button': False,
+                    'grade': '67',
+                    'mode': 'honor',
+                    'linked_in_url': None,
+                    'can_unenroll': True,
+                }
+            )
 
         # test when the display is unavailable or notpassing, we get the correct results out
         course2.certificates_display_behavior = 'early_no_info'
