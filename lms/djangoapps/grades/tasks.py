@@ -31,12 +31,14 @@ def recalculate_subsection_grade(user_id, course_id, usage_id, only_if_higher, m
     """
     Updates a saved subsection grade.
     This method expects the following parameters:
-       - user_id: serialized id of applicable User object
-       - course_id: Unicode string representing the course
-       - usage_id: Unicode string indicating the courseware instance
-       - only_if_higher: boolean indicating whether grades should
+        - user_id: serialized id of applicable User object
+        - course_id: Unicode string representing the course
+        - usage_id: Unicode string indicating the courseware instance
+        - only_if_higher: boolean indicating whether grades should
         be updated only if the new grade is higher than the previous
         value.
+        - modified_time_string: timestamp for when the subsection grade
+        update was fired
     """
     if not PersistentGradesEnabledFlag.feature_enabled(course_id):
         return
@@ -53,17 +55,13 @@ def recalculate_subsection_grade(user_id, course_id, usage_id, only_if_higher, m
         read_time = student_module.modified
         modified_time = datetime.strptime(modified_time_string, "%y/%m/%d/%H/%M/%S/%f")
         modified_time = timezone.make_aware(modified_time, timezone=None)
-        log.warning("read_time: {}, modified_time:{}".format(read_time, modified_time))
+
+        # if the student module was updated after the subsection update
+        # was initiated, the subsection update will attempt to use the
+        # learner's previous problem score, so we retry the subsection
+        # grade update here instead of proceeding.
         if read_time > modified_time:
-            raise recalculate_subsection_grade.retry(
-                args=[
-                    user_id,
-                    course_id,
-                    usage_id,
-                    only_if_higher,
-                    modified_time_string
-                ]
-            )
+            _retry_recalculate_subsection_grade(user_id, course_id, usage_id, only_if_higher, modified_time_string)
 
     collected_block_structure = get_course_in_cache(course_key)
     course = modulestore().get_course(course_key, depth=0)
@@ -95,16 +93,7 @@ def recalculate_subsection_grade(user_id, course_id, usage_id, only_if_higher, m
             )
 
     except IntegrityError as exc:
-        raise recalculate_subsection_grade.retry(
-            args=[
-                user_id,
-                course_id,
-                usage_id,
-                only_if_higher,
-                modified_time
-            ],
-            exc=exc
-        )
+        _retry_recalculate_subsection_grade(user_id, course_id, usage_id, only_if_higher, modified_time_string, exc)
 
 
 @task(default_retry_delay=30, routing_key=settings.RECALCULATE_GRADES_ROUTING_KEY)
@@ -125,3 +114,20 @@ def recalculate_course_grade(user_id, course_id):
         CourseGradeFactory(student).update(course)
     except IntegrityError as exc:
         raise recalculate_course_grade.retry(args=[user_id, course_id], exc=exc)
+
+
+def _retry_recalculate_subsection_grade(user_id, course_id, usage_id, only_if_higher, modified_time_string, exc=None):
+    """
+    Calls retry for the recalculate_subsection_grade task with the
+    given inputs.
+    """
+    raise recalculate_subsection_grade.retry(
+        args=[
+            user_id,
+            course_id,
+            usage_id,
+            only_if_higher,
+            modified_time_string
+        ],
+        exc=exc
+    )
