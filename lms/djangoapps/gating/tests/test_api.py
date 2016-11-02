@@ -10,6 +10,7 @@ from courseware.tests.helpers import LoginEnrollmentTestCase
 
 from milestones import api as milestones_api
 from milestones.tests.utils import MilestonesTestCaseMixin
+from openedx.core.djangolib.testing.utils import get_mock_request
 from openedx.core.lib.gating import api as gating_api
 from gating.api import _get_xblock_parent, evaluate_prerequisite
 
@@ -91,7 +92,6 @@ class TestGetXBlockParent(GatingTestCase):
 
     def test_get_parent_with_category(self):
         """ Test test_get_parent_of_category """
-
         result = _get_xblock_parent(self.vert1, 'sequential')
         self.assertEqual(result.location, self.seq1.location)
         result = _get_xblock_parent(self.vert1, 'chapter')
