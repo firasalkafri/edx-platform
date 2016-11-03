@@ -251,13 +251,13 @@ class CourseGrade(object):
             persistent_grade = PersistentCourseGrade.read_course_grade(user.id, course.id)
         except PersistentCourseGrade.DoesNotExist:
             return None
-        course_grade = CourseGrade(user, course, None)  # no course structure needed
-        course_grade._percent = persistent_grade.percent_grade  # pylint: disable=protected-access
-        course_grade._letter_grade = persistent_grade.letter_grade  # pylint: disable=protected-access
-        course_grade.course_version = persistent_grade.course_version
-        course_grade.course_edited_timestamp = persistent_grade.course_edited_timestamp
-
-        return course_grade
+        else:
+            course_grade = CourseGrade(user, course, None)  # no course structure needed
+            course_grade._percent = persistent_grade.percent_grade  # pylint: disable=protected-access
+            course_grade._letter_grade = persistent_grade.letter_grade  # pylint: disable=protected-access
+            course_grade.course_version = persistent_grade.course_version
+            course_grade.course_edited_timestamp = persistent_grade.course_edited_timestamp
+            return course_grade
 
     @staticmethod
     def _calc_percent(grade_value):
@@ -357,15 +357,12 @@ class CourseGradeFactory(object):
 
         return CourseGrade.get_persisted_grade(self.student, course)
 
-    def _get_saved_grade(self, course, course_structure=None):
+    def _get_saved_grade(self, course, course_structure):
         """
         Returns the saved grade for the given course and student.
         """
         if not PersistentGradesEnabledFlag.feature_enabled(course.id):
             return None
-
-        if course_structure is None:
-            course_structure = get_course_blocks(self.student, course.location)
 
         return CourseGrade.load_persisted_grade(
             self.student,
