@@ -1835,7 +1835,7 @@ class TestXmoduleRuntimeEvent(TestSubmittingProblems):
     def test_score_change_signal(self, send_mock):
         """Test that a Django signal is generated when a score changes"""
         self.set_module_grade_using_publish(self.grade_dict)
-        user_module, _ = StudentModule.objects.get(
+        user_module = StudentModule.objects.get(
             student_id=self.student_user.id,
             module_state_key=self.problem.location,
             course_id=self.course.location.course_key
