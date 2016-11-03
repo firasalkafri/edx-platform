@@ -128,12 +128,12 @@ from openedx.core.djangolib.markup import HTML, Text
 ##                             ## self.date.astimezone(self.time_zone).strftime(self.date_format.encode('utf-8')).decode('utf-8'),
 ##                         )
                         if date_has_passed:
-                            data_string = _("${relative_date} ago {date}")
+                            data_string = _(relative_date + " ago {date}")
                         else:
-                            data_string = _(u"in ${relative_date} - {date}")
+                            data_string = _("in " + relative_date + " - {date}")
                         %>
-                        <h4 class="date localized-datetime" data-datetime="${course.end}" data-string="${data_string}" ></h4>
-                        ## data-timezone="${user_timezone}" data-language="${user_language}"
+                        <h4 class="date localized-datetime" data-format="shortDate" data-datetime="${course.end}" data-string="${data_string}" data-timezone="${user_timezone}" data-language="${user_language}"></h4>
+                        ##
                     </div>
                     end-date
             ## Refactor here
