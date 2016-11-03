@@ -13,6 +13,8 @@ from courseware.courses import get_course_info_section, get_course_date_summary
 
 from openedx.core.djangoapps.self_paced.models import SelfPacedConfiguration
 from openedx.core.djangolib.markup import HTML, Text
+from student.models import CourseEnrollment
+from course_modes.models import CourseMode
 %>
 
 <%block name="pagetitle">${_("{course_number} Course Info").format(course_number=course.display_number_with_default)}</%block>
@@ -128,14 +130,24 @@ from openedx.core.djangolib.markup import HTML, Text
 ##                             ## self.date.astimezone(self.time_zone).strftime(self.date_format.encode('utf-8')).decode('utf-8'),
 ##                         )
                         if date_has_passed:
-                            data_string = _(relative_date + " ago {date}")
+                            data_string = _(relative_date + " ago - {date}")
                         else:
                             data_string = _("in " + relative_date + " - {date}")
                         %>
                         <h4 class="date localized-datetime" data-format="shortDate" data-datetime="${course.end}" data-string="${data_string}" data-timezone="${user_timezone}" data-language="${user_language}"></h4>
                         ##
+                        <%
+                        if datetime.now(utc) <= course.end:
+                            mode, is_active = CourseEnrollment.enrollment_mode_for_user(self.user, self.course.id)
+                            if is_active and CourseMode.is_eligible_for_certificate(mode):
+                                desc_text = _('To earn a certificate, you must complete all requirements before this date.')
+                            else:
+                                desc_text = _('After this date, course content will be archived.')
+                        else:
+                            desc_text = _('This course is archived, which means you can review course content but it is no longer active.')
+                        %>
+                        <p class="description">${desc_text}</p>
                     </div>
-                    end-date
             ## Refactor here
                 % else:
                    ${HTML(get_course_date_summary(course, user))}
