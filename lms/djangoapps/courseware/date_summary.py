@@ -184,30 +184,30 @@ class CourseStartDate(DateSummary):
         return self.course.start
 
 
-class CourseEndDate(DateSummary):
-    """
-    Displays the end date of the course.
-    """
-    css_class = 'end-date'
-    title = ugettext_lazy('Course End')
-
-    @property
-    def is_enabled(self):
-        return self.date is not None
-
-    @property
-    def description(self):
-        if datetime.now(utc) <= self.date:
-            mode, is_active = CourseEnrollment.enrollment_mode_for_user(self.user, self.course.id)
-            if is_active and CourseMode.is_eligible_for_certificate(mode):
-                return _('To earn a certificate, you must complete all requirements before this date.')
-            else:
-                return _('After this date, course content will be archived.')
-        return _('This course is archived, which means you can review course content but it is no longer active.')
-
-    @property
-    def date(self):
-        return self.course.end
+# class CourseEndDate(DateSummary):
+#     """
+#     Displays the end date of the course.
+#     """
+#     css_class = 'end-date'
+#     title = ugettext_lazy('Course End')
+#
+#     @property
+#     def is_enabled(self):
+#         return self.date is not None
+#
+#     @property
+#     def description(self):
+#         if datetime.now(utc) <= self.date:
+#             mode, is_active = CourseEnrollment.enrollment_mode_for_user(self.user, self.course.id)
+#             if is_active and CourseMode.is_eligible_for_certificate(mode):
+#                 return _('To earn a certificate, you must complete all requirements before this date.')
+#             else:
+#                 return _('After this date, course content will be archived.')
+#         return _('This course is archived, which means you can review course content but it is no longer active.')
+#
+#     @property
+#     def date(self):
+#         return self.course.end
 
 
 class VerifiedUpgradeDeadlineDate(DateSummary):

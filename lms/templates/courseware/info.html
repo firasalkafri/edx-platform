@@ -3,6 +3,10 @@
 <%def name="online_help_token()"><% return "courseinfo" %></%def>
 <%namespace name='static' file='../static_content.html'/>
 <%!
+from babel.dates import format_timedelta
+from datetime import datetime
+from pytz import utc
+
 from django.utils.translation import ugettext as _
 
 from courseware.courses import get_course_info_section, get_course_date_summary
@@ -89,10 +93,53 @@ from openedx.core.djangolib.markup import HTML, Text
           % endif
         </section>
         <section aria-label="${_('Handout Navigation')}" class="handouts">
-          % if SelfPacedConfiguration.current().enable_course_home_improvements:
+##           % if SelfPacedConfiguration.current().enable_course_home_improvements:
             <h1 class="handouts-header">${_("Important Course Dates")}</h1>
-            ${HTML(get_course_date_summary(course, user))}
-          % endif
+                % if course.end <= datetime.now(utc):
+                    <div class="date-summary date-summary-end-date">
+                        <h3 class="heading">${_("Course End")}</h3>
+                        <%
+##                         """
+##                         Return this block's date in a human-readable format. If the date
+##                         is None, returns the empty string.
+##                         """
+##                         if self.date is None:
+##                             return ''
+##                         locale = to_locale(get_language())
+                        delta = course.end - datetime.now(utc)
+                        try:
+                            relative_date = format_timedelta(delta)
+##                             # Babel doesn't have translations for Esperanto, so we get
+##                             # a KeyError when testing translations with
+##                             # ?preview-lang=eo. This should not happen with any other
+##                             # languages. See https://github.com/python-babel/babel/issues/107
+                        except KeyError:
+                            relative_date = format_timedelta(delta)
+                        date_has_passed = delta.days < 0
+##                         # Translators: 'absolute' is a date such as "Jan 01,
+##                         # 2020". 'relative' is a fuzzy description of the time until
+##                         # 'absolute'. For example, 'absolute' might be "Jan 01, 2020",
+##                         # and if today were December 5th, 2020, 'relative' would be "1
+##                         # month".
+##                         date_format = _(u"{relative} ago - {absolute_date}") if date_has_passed else _(u"in {relative} - {absolute}")
+##                         formatted_date = date_format.format(
+##                             relative=relative_date,
+##                             absolute=course.end
+##                             ## self.date.astimezone(self.time_zone).strftime(self.date_format.encode('utf-8')).decode('utf-8'),
+##                         )
+                        if date_has_passed:
+                            data_string = _("${relative_date} ago {date}")
+                        else:
+                            data_string = _(u"in ${relative_date} - {date}")
+                        %>
+                        <h4 class="date localized-datetime" data-datetime="${course.end}" data-string="${data_string}" ></h4>
+                        ## data-timezone="${user_timezone}" data-language="${user_language}"
+                    </div>
+                    end-date
+            ## Refactor here
+                % else:
+                   ${HTML(get_course_date_summary(course, user))}
+                % endif
 
           <h1 class="handouts-header">${_(course.info_sidebar_name)}</h1>
           ${HTML(get_course_info_section(request, masquerade_user, course, 'handouts'))}
@@ -110,3 +157,9 @@ from openedx.core.djangolib.markup import HTML, Text
       </div>
   </div>
 </main>
+
+<%static:require_module_async module_name="js/dateutil_factory" class_name="DateUtilFactory">
+
+    DateUtilFactory.transform(iterationKey=".localized-datetime");
+
+</%static:require_module_async>

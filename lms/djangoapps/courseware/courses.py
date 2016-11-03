@@ -20,7 +20,7 @@ from xmodule.x_module import STUDENT_VIEW
 
 from courseware.access import has_access
 from courseware.date_summary import (
-    CourseEndDate,
+    # CourseEndDate,
     CourseStartDate,
     TodaysDate,
     VerificationDeadlineDate,
@@ -311,7 +311,7 @@ def _get_course_date_summary_blocks(course, user):
     sorted by date.
     """
     block_classes = (
-        CourseEndDate,
+        # CourseEndDate,
         CourseStartDate,
         TodaysDate,
         VerificationDeadlineDate,
