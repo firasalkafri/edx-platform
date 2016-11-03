@@ -192,12 +192,11 @@ class RecalculateSubsectionGradeTest(ModuleStoreTestCase):
                 self._apply_recalculate_subsection_grade()
 
     @ddt.data(ModuleStoreEnum.Type.mongo, ModuleStoreEnum.Type.split)
-    @ddt.unpack
-    def test_subsection_grades_not_enabled_on_course(self, default_store, added_queries):
+    def test_subsection_grades_not_enabled_on_course(self, default_store):
         with self.store.default_store(default_store):
             self.set_up_course(enable_subsection_grades=False)
             self.assertFalse(PersistentGradesEnabledFlag.feature_enabled(self.course.id))
-            with check_mongo_calls(2) and self.assertNumQueries(16 + added_queries):
+            with check_mongo_calls(2) and self.assertNumQueries(0):
                 self._apply_recalculate_subsection_grade()
 
     @skip("Pending completion of TNL-5089")
