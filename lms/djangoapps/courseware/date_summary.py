@@ -172,16 +172,16 @@ class TodaysDate(DateSummary):
         )
 
 
-class CourseStartDate(DateSummary):
-    """
-    Displays the start date of the course.
-    """
-    css_class = 'start-date'
-    title = ugettext_lazy('Course Starts')
-
-    @property
-    def date(self):
-        return self.course.start
+# class CourseStartDate(DateSummary):
+#     """
+#     Displays the start date of the course.
+#     """
+#     css_class = 'start-date'
+#     title = ugettext_lazy('Course Starts')
+#
+#     @property
+#     def date(self):
+#         return self.course.start
 
 
 # class CourseEndDate(DateSummary):

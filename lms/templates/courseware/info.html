@@ -97,46 +97,38 @@ from course_modes.models import CourseMode
         <section aria-label="${_('Handout Navigation')}" class="handouts">
 ##           % if SelfPacedConfiguration.current().enable_course_home_improvements:
             <h1 class="handouts-header">${_("Important Course Dates")}</h1>
+                ## Course Start Date
+                % if course.start is not None and datetime.now(utc) <= course.start:
+                    <div class="date-summary date-summary-start-date">
+                    <h3 class="heading">${_("Course Starts")}</h3>
+                    <h4 class="date localized-datetime" data-format="shortDate" data-datetime="${course.start}" data-timezone="${user_timezone}" data-language="${user_language}"></h4>
+                    </div>
+                % endif
+
+                ## Course End Date
                 % if course.end <= datetime.now(utc):
                     <div class="date-summary date-summary-end-date">
                         <h3 class="heading">${_("Course End")}</h3>
                         <%
-##                         """
-##                         Return this block's date in a human-readable format. If the date
-##                         is None, returns the empty string.
-##                         """
-##                         if self.date is None:
-##                             return ''
-##                         locale = to_locale(get_language())
                         delta = course.end - datetime.now(utc)
                         try:
                             relative_date = format_timedelta(delta)
-##                             # Babel doesn't have translations for Esperanto, so we get
-##                             # a KeyError when testing translations with
-##                             # ?preview-lang=eo. This should not happen with any other
-##                             # languages. See https://github.com/python-babel/babel/issues/107
+##                          Babel doesn't have translations for Esperanto, so we get
+##                          a KeyError when testing translations with
+##                          ?preview-lang=eo. This should not happen with any other
+##                          languages. See https://github.com/python-babel/babel/issues/107
                         except KeyError:
                             relative_date = format_timedelta(delta)
                         date_has_passed = delta.days < 0
-##                         # Translators: 'absolute' is a date such as "Jan 01,
-##                         # 2020". 'relative' is a fuzzy description of the time until
-##                         # 'absolute'. For example, 'absolute' might be "Jan 01, 2020",
-##                         # and if today were December 5th, 2020, 'relative' would be "1
-##                         # month".
-##                         date_format = _(u"{relative} ago - {absolute_date}") if date_has_passed else _(u"in {relative} - {absolute}")
-##                         formatted_date = date_format.format(
-##                             relative=relative_date,
-##                             absolute=course.end
-##                             ## self.date.astimezone(self.time_zone).strftime(self.date_format.encode('utf-8')).decode('utf-8'),
-##                         )
+##                         Translators: 'absolute' is a date such as "Jan 01,
+##                         2020". 'relative' is a fuzzy description of the time until
+##                         'absolute'. For example, 'absolute' might be "Jan 01, 2020",
+##                         and if today were December 5th, 2020, 'relative' would be "1
+##                         month".
                         if date_has_passed:
                             data_string = _(relative_date + " ago - {date}")
                         else:
                             data_string = _("in " + relative_date + " - {date}")
-                        %>
-                        <h4 class="date localized-datetime" data-format="shortDate" data-datetime="${course.end}" data-string="${data_string}" data-timezone="${user_timezone}" data-language="${user_language}"></h4>
-                        ##
-                        <%
                         if datetime.now(utc) <= course.end:
                             mode, is_active = CourseEnrollment.enrollment_mode_for_user(self.user, self.course.id)
                             if is_active and CourseMode.is_eligible_for_certificate(mode):
@@ -146,15 +138,65 @@ from course_modes.models import CourseMode
                         else:
                             desc_text = _('This course is archived, which means you can review course content but it is no longer active.')
                         %>
+                        <h4 class="date localized-datetime" data-format="shortDate" data-datetime="${course.end}" data-string="${data_string}" data-timezone="${user_timezone}" data-language="${user_language}"></h4>
                         <p class="description">${desc_text}</p>
                     </div>
-            ## Refactor here
-                % else:
-                   ${HTML(get_course_date_summary(course, user))}
                 % endif
 
-          <h1 class="handouts-header">${_(course.info_sidebar_name)}</h1>
-          ${HTML(get_course_info_section(request, masquerade_user, course, 'handouts'))}
+                ## Date Today
+                <div class="date-summary-container">
+                    <div class="date-summary date-summary-todays-date">
+                        <%
+                            today_date = datetime.now(utc)
+                        %>
+                        <h3 class="heading localized-datetime" data-datetime="${today_date}" data-string="${_(u'Today is {date}')}" data-timezone="${user_timezone}" data-language="${user_language}"></h3>
+                    </div>
+                </div>
+
+
+##                         class TodaysDate(DateSummary):
+##     """
+##     Displays today's date.
+##     """
+##     css_class = 'todays-date'
+##     is_enabled = True
+##
+##     @property
+##     def date_format(self):
+##         return u'%b %d, %Y (%H:%M {tz_abbr})'.format(tz_abbr=get_time_zone_abbr(self.time_zone))
+##
+##     # The date is shown in the title, no need to display it again.
+##     def get_context(self):
+##         context = super(TodaysDate, self).get_context()
+##         context['date'] = ''
+##         return context
+##
+##     @property
+##     def date(self):
+##         return datetime.now(utc)
+##
+##     @property
+##     def title(self):
+##         return _(u'Today is {date}').format(
+##             date=self.date.astimezone(self.time_zone).strftime(self.date_format.encode('utf-8')).decode('utf-8')
+##         )
+
+
+
+
+
+
+
+
+
+
+
+            ## Refactor here
+        ${HTML(get_course_date_summary(course, user))}
+
+        <h1 class="handouts-header">${_(course.info_sidebar_name)}</h1>
+        ${HTML(get_course_info_section(request, masquerade_user, course, 'handouts'))}
+##             % endif
         </section>
         % else:
         <section class="updates">
@@ -171,7 +213,5 @@ from course_modes.models import CourseMode
 </main>
 
 <%static:require_module_async module_name="js/dateutil_factory" class_name="DateUtilFactory">
-
     DateUtilFactory.transform(iterationKey=".localized-datetime");
-
 </%static:require_module_async>
