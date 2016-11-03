@@ -240,6 +240,25 @@ class CourseGrade(object):
 
         return course_grade
 
+    @classmethod
+    def get_persisted_grade(cls, user, course):
+        """
+        Gets the persisted grade in the database, without checking
+        whether it is up-to-date with the course's grading policy.
+        For read use only.
+        """
+        try:
+            persistent_grade = PersistentCourseGrade.read_course_grade(user.id, course.id)
+        except PersistentCourseGrade.DoesNotExist:
+            return None
+        course_grade = CourseGrade(user, course, None)  # no course structure needed
+        course_grade._percent = persistent_grade.percent_grade  # pylint: disable=protected-access
+        course_grade._letter_grade = persistent_grade.letter_grade  # pylint: disable=protected-access
+        course_grade.course_version = persistent_grade.course_version
+        course_grade.course_edited_timestamp = persistent_grade.course_edited_timestamp
+
+        return course_grade
+
     @staticmethod
     def _calc_percent(grade_value):
         """
@@ -317,7 +336,7 @@ class CourseGradeFactory(object):
         if not self._user_has_access_to_course(course_structure):
             raise PermissionDenied("User does not have access to this course")
         return (
-            self.get_persisted(course, course_structure) or
+            self._get_saved_grade(course, course_structure) or
             self._compute_and_update_grade(course, course_structure, read_only)
         )
 
@@ -328,7 +347,17 @@ class CourseGradeFactory(object):
         course_structure = get_course_blocks(self.student, course.location)
         self._compute_and_update_grade(course, course_structure)
 
-    def get_persisted(self, course, course_structure=None):
+    def get_persisted(self, course):
+        """
+        Returns the saved grade for the given course and student,
+        irrespective of whether the saved grade is up-to-date.
+        """
+        if not PersistentGradesEnabledFlag.feature_enabled(course.id):
+            return None
+
+        return CourseGrade.get_persisted_grade(self.student, course)
+
+    def _get_saved_grade(self, course, course_structure=None):
         """
         Returns the saved grade for the given course and student.
         """
