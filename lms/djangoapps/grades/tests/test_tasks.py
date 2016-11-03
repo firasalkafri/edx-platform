@@ -104,7 +104,10 @@ class RecalculateSubsectionGradeTest(ModuleStoreTestCase):
             expected_args = tuple(self.recalculate_subsection_grade_kwargs.values())
         else:
             send_args = {'user': self.user, 'course': self.course}
-            expected_args = (self.problem_score_changed_kwargs['user_id'], self.problem_score_changed_kwargs['course_id'])
+            expected_args = (
+                self.problem_score_changed_kwargs['user_id'],
+                self.problem_score_changed_kwargs['course_id']
+            )
         with self.mock_student_module() and patch(
             enqueue_op,
             return_value=None

@@ -1848,7 +1848,7 @@ class TestXmoduleRuntimeEvent(TestSubmittingProblems):
             'course_id': unicode(self.course.id),
             'usage_id': unicode(self.problem.location),
             'only_if_higher': None,
-            'modified_time': user_module.modified.strftime("%y/%m/%d/%H/%M/%S/%f")
+            'modified_time': user_module.modified
         }
         send_mock.assert_called_with(**expected_signal_kwargs)
 
