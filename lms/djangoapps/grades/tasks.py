@@ -7,8 +7,8 @@ from datetime import datetime
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.db.utils import IntegrityError
-from django.utils import timezone
 from logging import getLogger
+from pytz import UTC
 
 from courseware.models import StudentModule
 from lms.djangoapps.course_blocks.api import get_course_blocks
@@ -53,8 +53,7 @@ def recalculate_subsection_grade(user_id, course_id, usage_id, only_if_higher, m
             course_id=course_key,
         )
         read_time = student_module.modified
-        modified_time = datetime.strptime(modified_time_string, "%y/%m/%d/%H/%M/%S/%f")
-        modified_time = timezone.make_aware(modified_time, timezone=None)
+        modified_time = datetime.strptime(modified_time_string, "%y/%m/%d/%H/%M/%S/%f").replace(tzinfo=UTC)
 
         # if the student module was updated after the subsection update
         # was initiated, the subsection update will attempt to use the

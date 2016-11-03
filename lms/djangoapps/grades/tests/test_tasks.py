@@ -8,8 +8,8 @@ from datetime import datetime, timedelta
 import ddt
 from django.conf import settings
 from django.db.utils import IntegrityError
-from django.utils import timezone
 from mock import patch, MagicMock
+from pytz import UTC
 from uuid import uuid4
 from unittest import skip
 
@@ -54,12 +54,22 @@ class RecalculateSubsectionGradeTest(ModuleStoreTestCase):
         self.sequential = ItemFactory.create(parent=self.chapter, category='sequential', display_name="Open Sequential")
         self.problem = ItemFactory.create(parent=self.sequential, category='problem', display_name='problem')
 
-        self.score_changed_kwargs = OrderedDict([
+        now = datetime.now()
+
+        self.problem_score_changed_kwargs = OrderedDict([
             ('user_id', self.user.id),
             ('course_id', unicode(self.course.id)),
             ('usage_id', unicode(self.problem.location)),
             ('only_if_higher', None),
-            ('modified_time', datetime.now().strftime("%y/%m/%d/%H/%M/%S/%f"))
+            ('modified_time', now)
+        ])
+
+        self.recalculate_subsection_grade_kwargs = OrderedDict([
+            ('user_id', self.user.id),
+            ('course_id', unicode(self.course.id)),
+            ('usage_id', unicode(self.problem.location)),
+            ('only_if_higher', None),
+            ('modified_time', now.strftime("%y/%m/%d/%H/%M/%S/%f"))
         ])
 
         # this call caches the anonymous id on the user object, saving 4 queries in all happy path tests
@@ -75,7 +85,7 @@ class RecalculateSubsectionGradeTest(ModuleStoreTestCase):
         """
         mock_student_module_return = MagicMock()
         mock_student_module_return.modified = datetime.now() + timedelta(seconds=timedelta_in_seconds)
-        mock_student_module_return.modified = timezone.make_aware(mock_student_module_return.modified, timezone=None)
+        mock_student_module_return.modified = mock_student_module_return.modified.replace(tzinfo=UTC)
         with patch("courseware.models.StudentModule.objects.get", return_value=mock_student_module_return):
             yield
 
@@ -90,11 +100,11 @@ class RecalculateSubsectionGradeTest(ModuleStoreTestCase):
         """
         self.set_up_course()
         if test_signal == PROBLEM_SCORE_CHANGED:
-            send_args = self.score_changed_kwargs
-            expected_args = tuple(self.score_changed_kwargs.values())
+            send_args = self.problem_score_changed_kwargs
+            expected_args = tuple(self.recalculate_subsection_grade_kwargs.values())
         else:
             send_args = {'user': self.user, 'course': self.course}
-            expected_args = (self.score_changed_kwargs['user_id'], self.score_changed_kwargs['course_id'])
+            expected_args = (self.problem_score_changed_kwargs['user_id'], self.problem_score_changed_kwargs['course_id'])
         with self.mock_student_module() and patch(
             enqueue_op,
             return_value=None
@@ -150,8 +160,8 @@ class RecalculateSubsectionGradeTest(ModuleStoreTestCase):
                 other_task.assert_not_called()
                 executed_task.assert_called_once_with(
                     args=(
-                        self.score_changed_kwargs['user_id'],
-                        self.score_changed_kwargs['course_id'],
+                        self.problem_score_changed_kwargs['user_id'],
+                        self.problem_score_changed_kwargs['course_id'],
                     )
                 )
 
@@ -212,7 +222,7 @@ class RecalculateSubsectionGradeTest(ModuleStoreTestCase):
         with self.store.default_store(default_store):
             self.set_up_course()
             with check_mongo_calls(0) and self.assertNumQueries(3 if feature_flag else 2):
-                recalculate_subsection_grade.apply(args=tuple(self.score_changed_kwargs.values()))
+                recalculate_subsection_grade.apply(args=tuple(self.recalculate_subsection_grade_kwargs.values()))
 
     @patch('lms.djangoapps.grades.tasks.recalculate_subsection_grade.retry')
     @patch('lms.djangoapps.grades.new.subsection_grade.SubsectionGradeFactory.update')
@@ -235,8 +245,8 @@ class RecalculateSubsectionGradeTest(ModuleStoreTestCase):
         mock_update.side_effect = IntegrityError("WHAMMY")
         recalculate_course_grade.apply(
             args=(
-                self.score_changed_kwargs['user_id'],
-                self.score_changed_kwargs['course_id'],
+                self.problem_score_changed_kwargs['user_id'],
+                self.problem_score_changed_kwargs['course_id'],
             )
         )
         self.assertTrue(mock_retry.called)
@@ -245,7 +255,7 @@ class RecalculateSubsectionGradeTest(ModuleStoreTestCase):
     def test_retry_subsection_grade_on_update_not_complete(self, mock_retry):
         self.set_up_course()
         with self.mock_student_module(timedelta_in_seconds=10):
-            recalculate_subsection_grade.apply(args=tuple(self.score_changed_kwargs.values()))
+            recalculate_subsection_grade.apply(args=tuple(self.recalculate_subsection_grade_kwargs.values()))
         self.assertTrue(mock_retry.called)
 
     def _apply_recalculate_subsection_grade(self):
@@ -254,4 +264,4 @@ class RecalculateSubsectionGradeTest(ModuleStoreTestCase):
         mocking in place.
         """
         with self.mock_student_module():
-            recalculate_subsection_grade.apply(args=tuple(self.score_changed_kwargs.values()))
+            recalculate_subsection_grade.apply(args=tuple(self.recalculate_subsection_grade_kwargs.values()))

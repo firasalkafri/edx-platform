@@ -106,7 +106,7 @@ def score_published_handler(sender, block, user, raw_earned, raw_possible, only_
 
     if update_score:
         module = set_score(user.id, block.location, raw_earned, raw_possible)
-        modified_time = module.modified.strftime("%y/%m/%d/%H/%M/%S/%f") if module else None
+        modified_time = module.modified if module else None
         PROBLEM_SCORE_CHANGED.send(
             sender=None,
             points_earned=raw_earned,
@@ -125,13 +125,15 @@ def enqueue_subsection_update(sender, **kwargs):  # pylint: disable=unused-argum
     """
     Handles the PROBLEM_SCORE_CHANGED signal by enqueueing a subsection update operation to occur asynchronously.
     """
+    modified_time = kwargs.get('modified_time', None)
+    modified_time_string = modified_time.strftime("%y/%m/%d/%H/%M/%S/%f") if modified_time else ""
     recalculate_subsection_grade.apply_async(
         args=(
             kwargs['user_id'],
             kwargs['course_id'],
             kwargs['usage_id'],
             kwargs.get('only_if_higher'),
-            kwargs.get('modified_time', None),
+            modified_time_string,
         )
     )
 
