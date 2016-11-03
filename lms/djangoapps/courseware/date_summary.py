@@ -18,7 +18,7 @@ from course_modes.models import CourseMode
 from lms.djangoapps.commerce.utils import EcommerceService
 from lms.djangoapps.verify_student.models import VerificationDeadline, SoftwareSecurePhotoVerification
 from student.models import CourseEnrollment
-from openedx.core.lib.time_zone_utils import get_time_zone_abbr
+# from openedx.core.lib.time_zone_utils import get_time_zone_abbr
 
 
 class DateSummary(object):
@@ -144,32 +144,32 @@ class DateSummary(object):
         )
 
 
-class TodaysDate(DateSummary):
-    """
-    Displays today's date.
-    """
-    css_class = 'todays-date'
-    is_enabled = True
-
-    @property
-    def date_format(self):
-        return u'%b %d, %Y (%H:%M {tz_abbr})'.format(tz_abbr=get_time_zone_abbr(self.time_zone))
-
-    # The date is shown in the title, no need to display it again.
-    def get_context(self):
-        context = super(TodaysDate, self).get_context()
-        context['date'] = ''
-        return context
-
-    @property
-    def date(self):
-        return datetime.now(utc)
-
-    @property
-    def title(self):
-        return _(u'Today is {date}').format(
-            date=self.date.astimezone(self.time_zone).strftime(self.date_format.encode('utf-8')).decode('utf-8')
-        )
+# class TodaysDate(DateSummary):
+#     """
+#     Displays today's date.
+#     """
+#     css_class = 'todays-date'
+#     is_enabled = True
+#
+#     @property
+#     def date_format(self):
+#         return u'%b %d, %Y (%H:%M {tz_abbr})'.format(tz_abbr=get_time_zone_abbr(self.time_zone))
+#
+#     # The date is shown in the title, no need to display it again.
+#     def get_context(self):
+#         context = super(TodaysDate, self).get_context()
+#         context['date'] = ''
+#         return context
+#
+#     @property
+#     def date(self):
+#         return datetime.now(utc)
+#
+#     @property
+#     def title(self):
+#         return _(u'Today is {date}').format(
+#             date=self.date.astimezone(self.time_zone).strftime(self.date_format.encode('utf-8')).decode('utf-8')
+#         )
 
 
 # class CourseStartDate(DateSummary):
