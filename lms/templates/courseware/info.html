@@ -153,44 +153,6 @@ from course_modes.models import CourseMode
                     </div>
                 </div>
 
-
-##                         class TodaysDate(DateSummary):
-##     """
-##     Displays today's date.
-##     """
-##     css_class = 'todays-date'
-##     is_enabled = True
-##
-##     @property
-##     def date_format(self):
-##         return u'%b %d, %Y (%H:%M {tz_abbr})'.format(tz_abbr=get_time_zone_abbr(self.time_zone))
-##
-##     # The date is shown in the title, no need to display it again.
-##     def get_context(self):
-##         context = super(TodaysDate, self).get_context()
-##         context['date'] = ''
-##         return context
-##
-##     @property
-##     def date(self):
-##         return datetime.now(utc)
-##
-##     @property
-##     def title(self):
-##         return _(u'Today is {date}').format(
-##             date=self.date.astimezone(self.time_zone).strftime(self.date_format.encode('utf-8')).decode('utf-8')
-##         )
-
-
-
-
-
-
-
-
-
-
-
             ## Refactor here
         ${HTML(get_course_date_summary(course, user))}
 
