@@ -186,6 +186,7 @@ define(['jquery', 'underscore', 'gettext', 'js/views/baseview', 'common/js/compo
             addButtonActions: function(element) {
                 var self = this;
                 element.find('.delete-button').click(_.bind(this.handleDeleteEvent, this));
+                element.find('.duplicate-button').click(_.bind(this.handleDuplicateEvent, this));
                 element.find('.button-new').click(_.bind(this.handleAddEvent, this));
             },
 
@@ -288,6 +289,16 @@ define(['jquery', 'underscore', 'gettext', 'js/views/baseview', 'common/js/compo
                     if (parentView) {
                         parentView.onChildDeleted(self, event);
                     }
+                });
+            },
+
+            handleDuplicateEvent: function(event) {
+                var self = this,
+                    target = $(event.currentTarget),
+                    xblockElement = $(target).closest('.outline-item');
+                event.preventDefault();
+                XBlockViewUtils.duplicateXBlock(xblockElement).done(function() {
+                    console.log('DUPLICATED');
                 });
             },
 

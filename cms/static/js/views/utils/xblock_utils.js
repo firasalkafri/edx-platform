@@ -3,8 +3,9 @@
  */
 define(['jquery', 'underscore', 'gettext', 'common/js/components/utils/view_utils', 'js/utils/module'],
     function($, _, gettext, ViewUtils, ModuleUtils) {
-        var addXBlock, deleteXBlock, createUpdateRequestData, updateXBlockField, VisibilityState,
-            getXBlockVisibilityClass, getXBlockListTypeClass, updateXBlockFields;
+        var addXBlock, duplicateXBlock, deleteXBlock, createUpdateRequestData, updateXBlockField, VisibilityState,
+            getXBlockVisibilityClass, getXBlockListTypeClass, updateXBlockFields, findXBlockElement,
+            createPlaceholderElement, onNewXBlock, refreshXBlock;
 
         /**
          * Represents the possible visibility states for an xblock:
@@ -63,6 +64,53 @@ define(['jquery', 'underscore', 'gettext', 'common/js/components/utils/view_util
                         });
                     return addOperation.promise();
                 });
+        };
+
+        findXBlockElement =  function(target, selector) {
+            return $(target).closest(selector);
+        };
+
+        createPlaceholderElement = function(element, elementClass) {
+            return $(element, {class: elementClass});
+        };
+
+        onNewXBlock = function(xblockElement, scrollOffset, is_duplicate, data) {
+            ViewUtils.setScrollOffset(xblockElement, scrollOffset);
+            xblockElement.data('locator', data.locator);
+            return refreshXBlock(xblockElement, true, is_duplicate);
+        };
+
+        refreshXBlock = function(element, block_added, is_duplicate) {
+                var xblockElement = findXBlockElement(element, '.outline-item'),
+                    parentElement = xblockElement.parents('.outline-item'),
+                    rootLocator =  xblockElement.parents('.outline-section').data('locator');
+                if (xblockElement.length === 0 || xblockElement.data('locator') === rootLocator) {
+                    this.render({refresh: true, block_added: block_added});
+                } else {
+                    refreshXBlock(findXBlockElement(parentElement, '.outline-item'), block_added, is_duplicate);
+                }
+            }
+
+        duplicateXBlock = function(xblockElement) {
+            var duplication = $.Deferred();
+            ViewUtils.runOperationShowingMessage(gettext('Duplicating'),
+                function() {
+                    var scrollOffset = ViewUtils.getScrollOffset(xblockElement),
+                        placeholderElement = createPlaceholderElement('<li/>', 'outline-item').insertAfter(xblockElement),
+                        parentElement = xblockElement.parents('.outline-item'),
+                        requestData = {
+                            duplicate_source_locator: xblockElement.data('locator'),
+                            parent_locator: parentElement.data('locator')
+                        };
+                    return $.postJSON('/xblock' + '/', requestData,
+                        _.bind(onNewXBlock, self, placeholderElement, scrollOffset, true))
+                        .fail(function() {
+                            // Remove the placeholder if the update failed
+                            placeholderElement.remove();
+                        });
+                });
+
+            return duplication.promise()
         };
 
         /**
@@ -217,6 +265,7 @@ define(['jquery', 'underscore', 'gettext', 'common/js/components/utils/view_util
         return {
             'VisibilityState': VisibilityState,
             'addXBlock': addXBlock,
+            'duplicateXBlock': duplicateXBlock,
             'deleteXBlock': deleteXBlock,
             'updateXBlockField': updateXBlockField,
             'getXBlockVisibilityClass': getXBlockVisibilityClass,
