@@ -36,7 +36,6 @@
                 this.mode = 'all';
                 this.filterInputReset();
                 this.selectedTopic = $('.forum-nav-browse-menu-item:visible .forum-nav-browse-title.is-focused');
-
                 this.discussionThreadListView = new DiscussionThreadListView({
                     collection: options.discussion,
                     el: this.$('.discussion-thread-list-container'),

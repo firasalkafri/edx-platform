@@ -301,9 +301,9 @@
                 this.administratorId = '43';
                 this.communityTaId = '44';
                 return DiscussionUtil.loadRoles({
-                    'Moderator': [parseInt(this.moderatorId)],
-                    'Administrator': [parseInt(this.administratorId)],
-                    'Community TA': [parseInt(this.communityTaId)]
+                    Moderator: [parseInt(this.moderatorId, 10)],
+                    Administrator: [parseInt(this.administratorId, 10)],
+                    'Community TA': [parseInt(this.communityTaId, 10)]
                 });
             });
 

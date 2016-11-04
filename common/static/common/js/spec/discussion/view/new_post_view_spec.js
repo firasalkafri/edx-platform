@@ -141,7 +141,7 @@
                     collection: this.discussion,
                     course_settings: this.course_settings,
                     mode: 'tab'
-                });
+                });console.log('new post view ', this.view);
             });
             it('disables the cohort menu if it is set false', function() {
                 DiscussionSpecHelper.makeModerator();
