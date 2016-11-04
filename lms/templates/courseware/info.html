@@ -10,11 +10,11 @@ from pytz import utc
 from django.utils.translation import ugettext as _
 
 from courseware.courses import get_course_info_section, get_course_date_summary
-
 from openedx.core.djangoapps.self_paced.models import SelfPacedConfiguration
 from openedx.core.djangolib.markup import HTML, Text
 from student.models import CourseEnrollment
 from course_modes.models import CourseMode
+from lms.djangoapps.verify_student.models import VerificationDeadline, SoftwareSecurePhotoVerification
 %>
 
 <%block name="pagetitle">${_("{course_number} Course Info").format(course_number=course.display_number_with_default)}</%block>
@@ -152,6 +152,107 @@ from course_modes.models import CourseMode
                         <h3 class="heading localized-datetime" data-datetime="${today_date}" data-string="${_(u'Today is {date}')}" data-timezone="${user_timezone}" data-language="${user_language}"></h3>
                     </div>
                 </div>
+
+            ## Verification Deadline
+##             class VerificationDeadlineDate(DateSummary):
+##     """
+##     Displays the date by which the user must complete the verification
+##     process.
+
+##     """
+            <%
+                verification_deadline = VerificationDeadline.deadline_for_course(course.id)
+            %>
+            % if verification_deadline is not None:
+            <div class="date-summary-container">
+                % if verification_deadline > datetime.now(utc):
+                <div class="date-summary date-summary-verified-upgrade-deadline">
+                    FARTFARTFART
+                </div>
+                % endif
+##             % if VerificationDeadline.deadline_for_course(course.id) is not None and VerificationDeadline.deadline_for_course(course.id) <= datetime.now(utc):
+##                 FART
+##             % endif
+            </div>
+            % endif
+
+
+    @property
+    def css_class(self):
+        base_state = 'verification-deadline'
+        if self.deadline_has_passed():
+            return base_state + '-passed'
+        elif self.must_retry():
+            return base_state + '-retry'
+        else:
+            return base_state + '-upcoming'
+
+    @property
+    def link_text(self):
+        return self.link_table[self.css_class][0]
+
+    @property
+    def link(self):
+        return self.link_table[self.css_class][1]
+
+    @property
+    def link_table(self):
+        """Maps verification state to a tuple of link text and location."""
+        return {
+            'verification-deadline-passed': (_('Learn More'), ''),
+            'verification-deadline-retry': (_('Retry Verification'), reverse('verify_student_reverify')),
+            'verification-deadline-upcoming': (
+                _('Verify My Identity'),
+                reverse('verify_student_verify_now', args=(self.course.id,))
+            )
+        }
+
+    @property
+    def title(self):
+        if self.deadline_has_passed():
+            return _('Missed Verification Deadline')
+        return _('Verification Deadline')
+
+    @property
+    def description(self):
+        if self.deadline_has_passed():
+            return _(
+                "Unfortunately you missed this course's deadline for"
+                " a successful verification."
+            )
+        return _(
+            "You must successfully complete verification before"
+            " this date to qualify for a Verified Certificate."
+        )
+
+    @lazy
+    def date(self):
+        return VerificationDeadline.deadline_for_course(self.course.id)
+
+    @lazy
+    def is_enabled(self):
+        if self.date is None:
+            return False
+        (mode, is_active) = CourseEnrollment.enrollment_mode_for_user(self.user, self.course.id)
+        if is_active and mode == 'verified':
+            return self.verification_status in ('expired', 'none', 'must_reverify')
+        return False
+
+    @lazy
+    def verification_status(self):
+        """Return the verification status for this user."""
+        return SoftwareSecurePhotoVerification.user_status(self.user)[0]
+
+    def deadline_has_passed(self):
+        """
+        Return True if a verification deadline exists, and has already passed.
+        """
+        deadline = self.date
+        return deadline is not None and deadline <= datetime.now(utc)
+
+    def must_retry(self):
+        """Return True if the user must re-submit verification, False otherwise."""
+        return self.verification_status == 'must_reverify'
 
             ## Refactor here
         ${HTML(get_course_date_summary(course, user))}
