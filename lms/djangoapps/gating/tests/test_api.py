@@ -10,7 +10,6 @@ from courseware.tests.helpers import LoginEnrollmentTestCase
 
 from milestones import api as milestones_api
 from milestones.tests.utils import MilestonesTestCaseMixin
-from openedx.core.djangolib.testing.utils import get_mock_request
 from openedx.core.lib.gating import api as gating_api
 from gating.api import _get_xblock_parent, evaluate_prerequisite
 
