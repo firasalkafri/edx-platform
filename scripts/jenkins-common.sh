@@ -24,8 +24,14 @@ fi
 # Activate the Python virtualenv
 source $HOME/edx-venv/bin/activate
 
-# add the node_js packages dir to PATH
+# add the node packages dir to PATH
 PATH=$PATH:node_modules/.bin
+
+echo "setting up nodeenv"
+pip install nodeenv
+nodeenv --node=0.10.33 --prebuilt node-env
+source node-env/bin/activate
+echo "done setting up nodeenv"
 
 # Manage the npm cache on Jenkins.
 # (In this case, remove it. That ensures from run-to-run, it is a clean npm environment)
