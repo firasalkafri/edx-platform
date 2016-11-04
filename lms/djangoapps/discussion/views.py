@@ -21,6 +21,7 @@ from openedx.core.djangoapps.course_groups.cohorts import (
     get_course_cohorts,
 )
 from courseware.access import has_access
+from student.models import CourseEnrollment
 from xmodule.modulestore.django import modulestore
 
 from django_comment_common.utils import ThreadContext
@@ -409,6 +410,9 @@ def user_profile(request, course_key, user_id):
 
     #TODO: Allow sorting?
     course = get_course_with_access(request.user, 'load', course_key, check_if_enrolled=True)
+    django_user = User.objects.get(id=user_id)
+    if not CourseEnrollment.is_enrolled(django_user, course.id):
+        raise Http404
     try:
         query_params = {
             'page': request.GET.get('page', 1),
@@ -443,11 +447,13 @@ def user_profile(request, course_key, user_id):
                 'annotated_content_info': annotated_content_info,
             })
         else:
-            django_user = User.objects.get(id=user_id)
+            user_roles = django_user.roles.filter(course_id=course.id).order_by("name").values_list("name", flat=True).distinct()
+
             context = {
                 'course': course,
                 'user': request.user,
                 'django_user': django_user,
+                'django_user_roles': user_roles,
                 'profiled_user': profiled_user.to_dict(),
                 'threads': threads,
                 'user_info': user_info,

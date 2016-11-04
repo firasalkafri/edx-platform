@@ -4,6 +4,7 @@ Tests for discussion pages
 
 import datetime
 from uuid import uuid4
+from common.test.acceptance.pages.lms.instructor_dashboard import InstructorDashboardPage
 
 from nose.plugins.attrib import attr
 from pytz import UTC
@@ -1132,21 +1133,23 @@ class DiscussionUserProfileTest(UniqueCourseTest):
 
     def setUp(self):
         super(DiscussionUserProfileTest, self).setUp()
-        CourseFixture(**self.course_info).install()
+        self.setup_course()
         # The following line creates a user enrolled in our course, whose
         # threads will be viewed, but not the one who will view the page.
         # It isn't necessary to log them in, but using the AutoAuthPage
         # saves a lot of code.
-        self.profiled_user_id = AutoAuthPage(
-            self.browser,
+        self.profiled_user_id = self.setup_user(
             username=self.PROFILED_USERNAME,
-            course_id=self.course_id
-        ).visit().get_user_id()
+        )
         # now create a second user who will view the profile.
-        self.user_id = AutoAuthPage(
-            self.browser,
-            course_id=self.course_id
-        ).visit().get_user_id()
+        self.user_id = self.setup_user()
+
+    def setup_course(self):
+        return CourseFixture(**self.course_info).install()
+
+    def setup_user(self, roles=[], **user_info):
+        roles_str = ','.join(roles)
+        return AutoAuthPage(self.browser, course_id=self.course_id, roles=roles_str, **user_info).visit().get_user_id()
 
     def check_pages(self, num_threads):
         # set up the stub server to return the desired amount of thread results
@@ -1248,6 +1251,46 @@ class DiscussionUserProfileTest(UniqueCourseTest):
 
         learner_profile_page.wait_for_page()
         self.assertTrue(learner_profile_page.field_is_visible('username'))
+
+    def test_learner_profile_roles(self):
+        """
+        Create a user with Administrator, Admin role in course_id_1
+        Visit course_id_1 and verify the roles exist.
+        Visit Course_id_2 and verify the roles does not exist.
+        """
+        # Setup a profiled user with roles.
+        expected_student_roles = ['Administrator, Student']
+        self.PROFILED_USERNAME = 'user_with_role'
+        self.profiled_user_id = self.setup_user(
+            roles=['Administrator'],
+            username=self.PROFILED_USERNAME
+        )
+        page = self.check_pages(1)
+
+        student_roles = page.get_user_roles()
+        self.assertTrue(
+            all([role in expected_student_roles for role in student_roles])
+        )
+        self.assertEqual(student_roles, expected_student_roles)
+        old_course_id = self.course_id
+        from nose.tools import set_trace;set_trace()
+        # Setup a new course and reset user roles and test roles are displayed correctly.
+        self.course_info['number'] = self.unique_id
+        self.setup_course()
+        new_course_id = self.course_id
+
+        self.assertNotEqual(old_course_id, new_course_id)
+
+        # Reset the user to have no role in the new course and verify the user is updated.
+        profiled_user_id_with_no_role = self.setup_user(roles=[], username=self.PROFILED_USERNAME)
+        self.assertEqual(self.profiled_user_id, profiled_user_id_with_no_role)
+
+        page = self.check_pages(1)
+        student_roles = page.get_user_roles()
+        from nose.tools import set_trace;set_trace()
+
+        page.click_on_sidebar_username()
+
 
 
 @attr(shard=2)

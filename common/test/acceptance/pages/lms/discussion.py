@@ -678,6 +678,9 @@ class DiscussionUserProfilePage(CoursePage):
         self.wait_for_page()
         self.q(css='.learner-profile-link').first.click()
 
+    def get_user_roles(self):
+        """Get user roles"""
+        return self.q(css='.sidebar-user-roles').text
 
 class DiscussionTabHomePage(CoursePage, DiscussionPageMixin):
 
