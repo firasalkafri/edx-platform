@@ -131,29 +131,40 @@ class TestCourseGradeFactory(GradeTestBase):
 
     def test_get_persisted(self):
         grade_factory = CourseGradeFactory(self.request.user)
+        # first, create a grade in the database
         with mock_get_score(1, 2):
             grade_factory.create(self.course, read_only=False)
+
+        # retrieve the grade, ensuring it is as expected and take just one query
+        with self.assertNumQueries(1):
             course_grade = grade_factory.get_persisted(self.course)
-            self.assertEqual(course_grade.letter_grade, u'Pass')
-            self.assertEqual(course_grade.percent, 0.5)
-            new_grading_policy = {
-                "GRADER": [
-                    {
-                        "type": "Homework",
-                        "min_count": 1,
-                        "drop_count": 0,
-                        "short_label": "HW",
-                        "weight": 1.0,
-                    },
-                ],
-                "GRADE_CUTOFFS": {
-                    "Pass": 0.9,
+        course_grade = grade_factory.get_persisted(self.course)
+        self.assertEqual(course_grade.letter_grade, u'Pass')
+        self.assertEqual(course_grade.percent, 0.5)
+
+        # update the grading policy
+        new_grading_policy = {
+            "GRADER": [
+                {
+                    "type": "Homework",
+                    "min_count": 1,
+                    "drop_count": 0,
+                    "short_label": "HW",
+                    "weight": 1.0,
                 },
-            }
-            self.course.set_grading_policy(new_grading_policy)
+            ],
+            "GRADE_CUTOFFS": {
+                "Pass": 0.9,
+            },
+        }
+        self.course.set_grading_policy(new_grading_policy)
+
+        # ensure the grade can still be retrieved via get_persisted
+        # despite its outdated grading policy
+        with self.assertNumQueries(1):
             course_grade = grade_factory.get_persisted(self.course)
-            self.assertEqual(course_grade.letter_grade, u'Pass')
-            self.assertEqual(course_grade.percent, 0.5)
+        self.assertEqual(course_grade.letter_grade, u'Pass')
+        self.assertEqual(course_grade.percent, 0.5)
 
 
 @ddt.ddt
