@@ -9,7 +9,13 @@ def _message(reqm, message):
         url_name = reqm.display_name_with_default_escaped))
 %>
 % if message:
-	% for reqm in module.required_modules:
-		<p class="conditional-message">${_message(reqm, message)}</p>
-	% endfor
+    % for reqm in module.required_modules:
+        % if reqm:
+            <p class="conditional-message">${_message(reqm, message)}</p>
+        % else:
+            <p class="conditional-message">
+                You do not have access to this dependency module. Please ask course staff to grant the access.
+            </p>
+        % endif
+    % endfor
 % endif

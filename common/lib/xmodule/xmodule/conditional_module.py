@@ -147,13 +147,8 @@ class ConditionalModule(ConditionalFields, XModule, StudioEditableModule):
 
     @lazy
     def required_modules(self):
-        result = []
-        for descriptor in self.descriptor.get_required_module_descriptors():
-            module = self.system.get_module(descriptor)
-            if module:
-                result.append(module)
-
-        return result
+        return [self.system.get_module(descriptor) for
+                descriptor in self.descriptor.get_required_module_descriptors()]
 
     def is_condition_satisfied(self):
         attr_name = self.conditions_map[self.conditional_attr]
@@ -165,8 +160,9 @@ class ConditionalModule(ConditionalFields, XModule, StudioEditableModule):
                     # the descriptor of a required module to have a property but
                     # for the resulting module to be a (flavor of) ErrorModule.
                     # So just log and return false.
-                    log.warn('Error in conditional module: \
-                        required module {module} has no {module_attr}'.format(module=module, module_attr=attr_name))
+                    if module is not None:
+                        log.warn('Error in conditional module: \
+                            required module {module} has no {module_attr}'.format(module=module, module_attr=attr_name))
                     return False
 
                 attr = getattr(module, attr_name)
