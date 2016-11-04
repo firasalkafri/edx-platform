@@ -58,6 +58,7 @@ from xmodule.modulestore.tests.factories import CourseFactory, check_mongo_calls
 log = logging.getLogger(__name__)
 
 
+@unittest.skipUnless(settings.ROOT_URLCONF == 'lms.urls', 'Test only valid in lms')
 @ddt.ddt
 class CourseEndingTest(TestCase):
     """Test things related to course endings: certificates, surveys, etc"""
