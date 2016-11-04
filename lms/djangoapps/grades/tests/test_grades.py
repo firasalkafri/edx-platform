@@ -10,6 +10,9 @@ from nose.plugins.attrib import attr
 from opaque_keys.edx.locations import SlashSeparatedCourseKey
 
 from capa.tests.response_xml_factory import MultipleChoiceResponseXMLFactory
+from courseware.model_data import set_score
+from courseware.tests.helpers import LoginEnrollmentTestCase
+
 from lms.djangoapps.course_blocks.api import get_course_blocks
 from openedx.core.djangolib.testing.utils import get_mock_request
 from student.tests.factories import UserFactory
@@ -445,7 +448,7 @@ class TestGetModuleScore(LoginEnrollmentTestCase, SharedModuleStoreTestCase):
         """
         super(TestGetModuleScore, self).setUp()
 
-        self.request = get_request_for_user(UserFactory())
+        self.request = get_mock_request(UserFactory())
         self.client.login(username=self.request.user.username, password="test")
         CourseEnrollment.enroll(self.request.user, self.course.id)
 
