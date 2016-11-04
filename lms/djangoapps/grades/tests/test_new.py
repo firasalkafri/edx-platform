@@ -132,7 +132,7 @@ class TestCourseGradeFactory(GradeTestBase):
     def test_get_persisted(self):
         grade_factory = CourseGradeFactory(self.request.user)
         with mock_get_score(1, 2):
-            grade_factory.create(self.course)
+            grade_factory.create(self.course, read_only=False)
             course_grade = grade_factory.get_persisted(self.course)
             self.assertEqual(course_grade.letter_grade, u'Pass')
             self.assertEqual(course_grade.percent, 0.5)
