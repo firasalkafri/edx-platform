@@ -171,8 +171,6 @@ def get_mock_request(user=None):
         request.user = user
     else:
         request.user = AnonymousUser()
-    request.COOKIES = {}
-    request.META = {}
     request.is_secure = lambda: True
     request.get_host = lambda: "edx.org"
     crum.set_current_request(request)
