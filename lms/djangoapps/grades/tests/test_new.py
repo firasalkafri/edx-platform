@@ -82,6 +82,23 @@ class TestCourseGradeFactory(GradeTestBase):
     """
     Test that CourseGrades are calculated properly
     """
+    def setUp(self):
+        super(TestCourseGradeFactory, self).setUp()
+        grading_policy = {
+            "GRADER": [
+                {
+                    "type": "Homework",
+                    "min_count": 1,
+                    "drop_count": 0,
+                    "short_label": "HW",
+                    "weight": 1.0,
+                },
+            ],
+            "GRADE_CUTOFFS": {
+                "Pass": 0.5,
+            },
+        }
+        self.course.set_grading_policy(grading_policy)
 
     @patch.dict(settings.FEATURES, {'PERSISTENT_GRADES_ENABLED_FOR_ALL_TESTS': False})
     @ddt.data(
@@ -106,26 +123,37 @@ class TestCourseGradeFactory(GradeTestBase):
         self.assertEqual(mock_save_grades.called, feature_flag and course_setting)
 
     def test_course_grade_creation(self):
-        grading_policy = {
-            "GRADER": [
-                {
-                    "type": "Homework",
-                    "min_count": 1,
-                    "drop_count": 0,
-                    "short_label": "HW",
-                    "weight": 1.0,
-                },
-            ],
-            "GRADE_CUTOFFS": {
-                "Pass": 0.5,
-            },
-        }
-        self.course.set_grading_policy(grading_policy)
         grade_factory = CourseGradeFactory(self.request.user)
         with mock_get_score(1, 2):
             course_grade = grade_factory.create(self.course)
         self.assertEqual(course_grade.letter_grade, u'Pass')
         self.assertEqual(course_grade.percent, 0.5)
+
+    def test_get_persisted(self):
+        grade_factory = CourseGradeFactory(self.request.user)
+        with mock_get_score(1, 2):
+            grade_factory.create(self.course)
+            course_grade = grade_factory.get_persisted(self.course)
+            self.assertEqual(course_grade.letter_grade, u'Pass')
+            self.assertEqual(course_grade.percent, 0.5)
+            new_grading_policy = {
+                "GRADER": [
+                    {
+                        "type": "Homework",
+                        "min_count": 1,
+                        "drop_count": 0,
+                        "short_label": "HW",
+                        "weight": 1.0,
+                    },
+                ],
+                "GRADE_CUTOFFS": {
+                    "Pass": 0.9,
+                },
+            }
+            self.course.set_grading_policy(new_grading_policy)
+            course_grade = grade_factory.get_persisted(self.course)
+            self.assertEqual(course_grade.letter_grade, u'Pass')
+            self.assertEqual(course_grade.percent, 0.5)
 
 
 @ddt.ddt
