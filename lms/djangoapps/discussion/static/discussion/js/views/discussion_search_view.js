@@ -19,7 +19,6 @@
                 _.extend(this, _.pick(options, ['discussionBoardView']));
 
                 this.template = HtmlUtils.template(searchTemplate);
-                this.discussionBoardView = options.discussionBoardView;
                 this.listenTo(this.model, 'change', this.render);
                 this.render();
             },

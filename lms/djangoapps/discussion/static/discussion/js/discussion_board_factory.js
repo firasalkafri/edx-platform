@@ -34,7 +34,7 @@
 
                 discussion = new window.Discussion(threads, {pages: threadPages, sort: sortPreference});
                 courseSettings = new window.DiscussionCourseSettings(options.course_settings);
-
+console.log(courseSettings);
                 discussionBoardView = new DiscussionBoardView({
                     el: $('.discussion-board'),
                     discussion: discussion,

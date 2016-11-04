@@ -348,5 +348,199 @@
             });
         });
 
+        describe('search alerts', function() {
+            var testAlertMessages, getAlertMessagesAndClasses;
+
+            testAlertMessages = function(expectedMessages) {
+                return expect($('.search-alert .message').map(function() {
+                    return $(this).html();
+                }).get()).toEqual(expectedMessages);
+            };
+
+            getAlertMessagesAndClasses = function() {
+                return $('.search-alert').map(function() {
+                    return {
+                        text: $('.message', this).html(),
+                        css_class: $(this).attr('class')
+                    };
+                }).get();
+            };
+
+            it('renders and removes search alerts', function() {
+                var bar, foo;
+                testAlertMessages([]);
+                foo = this.view.addSearchAlert('foo');
+                testAlertMessages(['foo']);
+                bar = this.view.addSearchAlert('bar');
+                testAlertMessages(['foo', 'bar']);
+                this.view.removeSearchAlert(foo.cid);
+                testAlertMessages(['bar']);
+                this.view.removeSearchAlert(bar.cid);
+                return testAlertMessages([]);
+            });
+
+            it('renders search alert with custom class', function() {
+                var messages;
+                testAlertMessages([]);
+
+                this.view.addSearchAlert('foo', 'custom-class');
+                messages = getAlertMessagesAndClasses();
+                expect(messages.length).toEqual(1);
+                expect(messages[0].text).toEqual('foo');
+                expect(messages[0].css_class).toEqual('search-alert custom-class');
+
+                this.view.addSearchAlert('bar', 'other-class');
+
+                messages = getAlertMessagesAndClasses();
+                expect(messages.length).toEqual(2);
+                expect(messages[0].text).toEqual('foo');
+                expect(messages[0].css_class).toEqual('search-alert custom-class');
+                expect(messages[1].text).toEqual('bar');
+                expect(messages[1].css_class).toEqual('search-alert other-class');
+            });
+
+
+            it('clears all search alerts', function() {
+                this.view.addSearchAlert('foo');
+                this.view.addSearchAlert('bar');
+                this.view.addSearchAlert('baz');
+                testAlertMessages(['foo', 'bar', 'baz']);
+                this.view.clearSearchAlerts();
+                return testAlertMessages([]);
+            });
+        });
+
+        describe('search spell correction', function() {
+            var testCorrection;
+
+            beforeEach(function() {
+                return spyOn(this.view, 'searchForUser');
+            });
+
+            testCorrection = function(view, correctedText) {
+                spyOn(view, 'addSearchAlert');
+                $.ajax.and.callFake(function(params) {
+                    params.success({
+                        discussion_data: [],
+                        page: 42,
+                        num_pages: 99,
+                        corrected_text: correctedText
+                    }, 'success');
+                    return {
+                        always: function() {
+                        }
+                    };
+                });
+                view.searchFor('dummy');
+                return expect($.ajax).toHaveBeenCalled();
+            };
+
+            it('adds a search alert when an alternate term was searched', function() {
+                testCorrection(this.view, 'foo');
+                expect(this.view.addSearchAlert.calls.count()).toEqual(1);
+                return expect(this.view.addSearchAlert.calls.mostRecent().args[0]).toMatch(/foo/);
+            });
+
+            it('does not add a search alert when no alternate term was searched', function() {
+                testCorrection(this.view, null);
+                expect(this.view.addSearchAlert.calls.count()).toEqual(1);
+                return expect(this.view.addSearchAlert.calls.mostRecent().args[0]).toMatch(/no threads matched/i);
+            });
+
+            it('clears search alerts when a new search is performed', function() {
+                spyOn(this.view, 'clearSearchAlerts');
+                spyOn(DiscussionUtil, 'safeAjax');
+                this.view.searchFor('dummy');
+                return expect(this.view.clearSearchAlerts).toHaveBeenCalled();
+            });
+
+            it('clears search alerts when the underlying collection changes', function() {
+                spyOn(this.view, 'clearSearchAlerts');
+                spyOn(this.view, 'renderThread');
+                this.view.collection.trigger('change', new Thread({
+                    id: 1
+                }));
+                return expect(this.view.clearSearchAlerts).toHaveBeenCalled();
+            });
+        });
+
+        describe('username search', function() {
+            var setAjaxResults;
+
+            it('makes correct ajax calls', function() {
+                $.ajax.and.callFake(function(params) {
+                    expect(params.data.username).toEqual('testing-username');
+                    expect(params.url.path()).toEqual(DiscussionUtil.urlFor('users'));
+                    params.success({
+                        users: []
+                    }, 'success');
+                    return {
+                        always: function() {
+                        }
+                    };
+                });
+                this.view.searchForUser('testing-username');
+                return expect($.ajax).toHaveBeenCalled();
+            });
+
+            setAjaxResults = function(threadSuccess, userResult) {
+                return $.ajax.and.callFake(function(params) {
+                    if (params.data.text && threadSuccess) {
+                        params.success({
+                            discussion_data: [],
+                            page: 42,
+                            num_pages: 99,
+                            corrected_text: 'dummy'
+                        }, 'success');
+                    } else if (params.data.username) {
+                        params.success({
+                            users: userResult
+                        }, 'success');
+                    }
+                    return {
+                        always: function() {
+                        }
+                    };
+                });
+            };
+
+            it('gets called after a thread search succeeds', function() {
+                spyOn(this.view, 'searchForUser').and.callThrough();
+                setAjaxResults(true, []);
+                this.view.searchFor('gizmo');
+                expect(this.view.searchForUser).toHaveBeenCalled();
+                return expect($.ajax.calls.mostRecent().args[0].data.username).toEqual('gizmo');
+            });
+
+            it('does not get called after a thread search fails', function() {
+                spyOn(this.view, 'searchForUser').and.callThrough();
+                setAjaxResults(false, []);
+                this.view.searchFor('gizmo');
+                return expect(this.view.searchForUser).not.toHaveBeenCalled();
+            });
+
+            it('adds a search alert when an username was matched', function() {
+                spyOn(this.view, 'addSearchAlert');
+                setAjaxResults(true, [
+                    {
+                        username: 'gizmo',
+                        id: '1'
+                    }
+                ]);
+                this.view.searchForUser('dummy');
+                expect($.ajax).toHaveBeenCalled();
+                expect(this.view.addSearchAlert).toHaveBeenCalled();
+                return expect(this.view.addSearchAlert.calls.mostRecent().args[0]).toMatch(/gizmo/);
+            });
+
+            it('does not add a search alert when no username was matched', function() {
+                spyOn(this.view, 'addSearchAlert');
+                setAjaxResults(true, []);
+                this.view.searchForUser('dummy');
+                expect($.ajax).toHaveBeenCalled();
+                return expect(this.view.addSearchAlert).not.toHaveBeenCalled();
+            });
+        });
+
     });
 }).call(this);
