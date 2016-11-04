@@ -546,7 +546,7 @@
                 ],
                 exports: 'Discussion'
             },
-            'common/js/discussion/discussion_course_settings': {
+            'common/js/discussion/models/discussion_course_settings': {
                 deps: [
                     'common/js/discussion/utils'
                 ],

@@ -23,6 +23,7 @@
                     this.discussion = options.discussion;
                     this.course_settings = new window.DiscussionCourseSettings(options.course_settings);
                     this.discussionBoardView = options.discussionBoardView;
+                    this.newPostView = options.newPostView;
                 },
 
                 start: function() {

@@ -6,10 +6,13 @@
             'jquery',
             'backbone',
             'discussion/js/discussion_router',
-            'discussion/js/views/discussion_board_view',
-            'common/js/discussion/views/new_post_view'
+            'common/js/discussion/discussion',
+            'common/js/discussion/models/discussion_course_settings',
+            'common/js/discussion/views/new_post_view',
+            'discussion/js/views/discussion_board_view'
         ],
-        function($, Backbone, DiscussionRouter, DiscussionBoardView, NewPostView) {
+        function($, Backbone, DiscussionRouter, Discussion, DiscussionCourseSettings, NewPostView,
+                 DiscussionBoardView) {
             return function(options) {
                 var userInfo = options.user_info,
                     sortPreference = options.sort_preference,
@@ -32,21 +35,15 @@
                 window.user = user;
                 window.Content.loadContentInfos(contentInfo);
 
-                discussion = new window.Discussion(threads, {pages: threadPages, sort: sortPreference});
-                courseSettings = new window.DiscussionCourseSettings(options.course_settings);
-console.log(courseSettings);
+                // Create a discussion model
+                discussion = new Discussion(threads, {pages: threadPages, sort: sortPreference});
+                courseSettings = new DiscussionCourseSettings(options.course_settings);
+
+                // Create the discussion board view
                 discussionBoardView = new DiscussionBoardView({
                     el: $('.discussion-board'),
                     discussion: discussion,
                     courseSettings: courseSettings
-                });
-
-                // Set up the router to manage the page's history
-                router = new DiscussionRouter({
-                    courseId: options.courseId,
-                    discussion: discussion,
-                    courseSettings: courseSettings,
-                    discussionBoardView: discussionBoardView
                 });
 
                 // Create the new post view
@@ -57,11 +54,16 @@ console.log(courseSettings);
                     mode: 'tab'
                 });
                 newPostView.render();
-                router.newPostView = newPostView;
 
-                // Start the router
+                // Set up a router to manage the page's history
+                router = new DiscussionRouter({
+                    courseId: options.courseId,
+                    discussion: discussion,
+                    courseSettings: courseSettings,
+                    discussionBoardView: discussionBoardView,
+                    newPostView: newPostView
+                });
                 router.start();
-
                 routerEvents = {
                     // Add new breadcrumbs and clear search box when the user selects topics
                     'topic:selected': function(topic) {
@@ -72,7 +74,6 @@ console.log(courseSettings);
                         router.discussionBoardView.searchBox.clearSearch();
                     }
                 };
-
                 Object.keys(routerEvents).forEach(function(key) {
                     router.discussionBoardView.on(key, routerEvents[key]);
                 });

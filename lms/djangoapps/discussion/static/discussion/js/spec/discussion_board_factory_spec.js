@@ -10,7 +10,7 @@ define(
         'use strict';
 
         // TODO: re-enable when this doesn't interact badly with other history tests
-        xdescribe('Discussion Board Factory', function() {
+        describe('Discussion Board Factory', function() {
             var initializeDiscussionBoardFactory = function() {
                 DiscussionBoardFactory({
                     el: $('.discussion-board'),

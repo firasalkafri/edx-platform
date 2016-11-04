@@ -4,18 +4,20 @@ define(
         'underscore',
         'jquery',
         'edx-ui-toolkit/js/utils/constants',
+        'common/js/discussion/discussion',
         'discussion/js/views/discussion_board_view',
         'discussion/js/views/discussion_search_view',
         'common/js/discussion/models/discussion_course_settings'
     ],
-    function(_, $, constants, DiscussionBoardView, DiscussionSearchView, DiscussionCourseSettings) {
+    function(_, $, constants, Discussion, DiscussionBoardView, DiscussionSearchView, DiscussionCourseSettings) {
         'use strict';
         describe('DiscussionBoardView', function() {
             var discussionBoardView,
-                courseSettings = new DiscussionCourseSettings();
+                courseSettings = new DiscussionCourseSettings(),
                 discussion = new Discussion([], {
                     pages: 1
                 });
+
             beforeEach(function() {
                 discussionBoardView = new DiscussionBoardView({
                     el: $('.discussion-board'),
@@ -27,6 +29,7 @@ define(
 
             describe('DiscussionSearchView', function() {
                 var searchView;
+
                 beforeEach(function() {
                     setFixtures('<div class="search-container"></div>');
                     searchView = new DiscussionSearchView({
