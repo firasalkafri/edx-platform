@@ -542,7 +542,7 @@
             'common/js/discussion/discussion': {
                 deps: [
                     'common/js/discussion/utils',
-                    'xmodule_js/common_static/common/js/discussion/content'
+                    'common/js/discussion/content'
                 ],
                 exports: 'Discussion'
             },

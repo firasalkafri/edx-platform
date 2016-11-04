@@ -5,21 +5,24 @@
         [
             'jquery',
             'backbone',
-            'discussion/js/discussion_router',
+            'common/js/discussion/content',
             'common/js/discussion/discussion',
+            'common/js/discussion/utils',
             'common/js/discussion/models/discussion_course_settings',
+            'common/js/discussion/models/discussion_user',
             'common/js/discussion/views/new_post_view',
+            'discussion/js/discussion_router',
             'discussion/js/views/discussion_board_view'
         ],
-        function($, Backbone, DiscussionRouter, Discussion, DiscussionCourseSettings, NewPostView,
-                 DiscussionBoardView) {
+        function($, Backbone, Content, Discussion, DiscussionUtil, DiscussionCourseSettings, DiscussionUser,
+                 NewPostView, DiscussionRouter, DiscussionBoardView) {
             return function(options) {
                 var userInfo = options.user_info,
                     sortPreference = options.sort_preference,
                     threads = options.threads,
                     threadPages = options.thread_pages,
                     contentInfo = options.content_info,
-                    user = new window.DiscussionUser(userInfo),
+                    user = new DiscussionUser(userInfo),
                     discussion,
                     courseSettings,
                     newPostView,
@@ -27,13 +30,13 @@
                     router,
                     routerEvents;
 
-                // TODO: Perhaps eliminate usage of global variables when possible
-                window.DiscussionUtil.loadRoles(options.roles);
+                // TODO: eliminate usage of global variables when possible
+                DiscussionUtil.loadRoles(options.roles);
                 window.$$course_id = options.courseId;
                 window.courseName = options.course_name;
-                window.DiscussionUtil.setUser(user);
+                DiscussionUtil.setUser(user);
                 window.user = user;
-                window.Content.loadContentInfos(contentInfo);
+                Content.loadContentInfos(contentInfo);
 
                 // Create a discussion model
                 discussion = new Discussion(threads, {pages: threadPages, sort: sortPreference});
