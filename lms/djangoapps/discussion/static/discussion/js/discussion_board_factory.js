@@ -48,6 +48,7 @@
                     discussion: discussion,
                     courseSettings: courseSettings
                 });
+                discussionBoardView.render();
 
                 // Create the new post view
                 newPostView = new NewPostView({
@@ -74,7 +75,7 @@
                     },
                     // Clear search box when a thread is selected
                     'thread:selected': function() {
-                        router.discussionBoardView.searchBox.clearSearch();
+                        router.discussionBoardView.searchView.clearSearch();
                     }
                 };
                 Object.keys(routerEvents).forEach(function(key) {

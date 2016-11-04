@@ -288,11 +288,11 @@
                 deps: ['jquery', 'underscore', 'slick.core', 'slick.grid'],
                 init: function() {
                     // Set global variables that the util code is expecting to be defined
-                    require([
+                    require([  // eslint-disable-line global-require
                         'edx-ui-toolkit/js/utils/html-utils',
                         'edx-ui-toolkit/js/utils/string-utils'
                     ], function(HtmlUtils, StringUtils) {
-                        window.edx = edx || {};
+                        window.edx = window.edx || {};
                         window.edx.HtmlUtils = HtmlUtils;
                         window.edx.StringUtils = StringUtils;
                     });
@@ -383,7 +383,7 @@
                 deps: ['jquery', 'underscore', 'underscore.string', 'backbone', 'gettext'],
                 init: function() {
                     // Set global variables that the payment code is expecting to be defined
-                    require([
+                    require([  // eslint-disable-line global-require
                         'underscore',
                         'underscore.string',
                         'edx-ui-toolkit/js/utils/html-utils',
@@ -391,7 +391,7 @@
                     ], function(_, str, HtmlUtils, StringUtils) {
                         window._ = _;
                         window._.str = str;
-                        window.edx = edx || {};
+                        window.edx = window.edx || {};
                         window.edx.HtmlUtils = HtmlUtils;
                         window.edx.StringUtils = StringUtils;
                     });
@@ -527,10 +527,21 @@
                 exports: 'DiscussionUtil',
                 init: function() {
                     // Set global variables that the discussion code is expecting to be defined
-                    require(['backbone', 'URI'], function(Backbone, URI) {
-                        window.Backbone = Backbone;
-                        window.URI = URI;
-                    });
+                    require(  // eslint-disable-line global-require
+                        [
+                            'backbone',
+                            'URI',
+                            'edx-ui-toolkit/js/utils/html-utils',
+                            'edx-ui-toolkit/js/utils/string-utils'
+                        ],
+                        function(Backbone, URI, HtmlUtils, StringUtils) {
+                            window.Backbone = Backbone;
+                            window.URI = URI;
+                            window.edx = window.edx || {};
+                            window.edx.HtmlUtils = HtmlUtils;
+                            window.edx.StringUtils = StringUtils;
+                        }
+                    );
                 }
             },
             'common/js/discussion/content': {

@@ -29,31 +29,29 @@
                 'click .search-btn': 'performSearch',
                 'topic:selected': 'clearSearch'
             },
+
             initialize: function(options) {
                 this.courseSettings = options.courseSettings;
                 this.sidebar_padding = 10;
                 this.current_search = '';
                 this.mode = 'all';
+                this.discussion = options.discussion;
                 this.filterInputReset();
                 this.selectedTopic = $('.forum-nav-browse-menu-item:visible .forum-nav-browse-title.is-focused');
-                this.discussionThreadListView = new DiscussionThreadListView({
-                    collection: options.discussion,
-                    el: this.$('.discussion-thread-list-container'),
-                    courseSettings: this.courseSettings
-                }).render();
-
-                // Initialize and render search box
-                this.searchBox = new DiscussionSearchView({
-                    el: $('.forum-search'),
-                    discussionBoardView: this
-                }).render();
-
-                this.renderBreadcrumbs();
                 this.listenTo(this.model, 'change', this.render);
-                this.render();
             },
 
             render: function() {
+                this.discussionThreadListView = new DiscussionThreadListView({
+                    collection: this.discussion,
+                    el: this.$('.discussion-thread-list-container'),
+                    courseSettings: this.courseSettings
+                }).render();
+                this.searchView = new DiscussionSearchView({
+                    el: this.$('.forum-search'),
+                    discussionBoardView: this
+                }).render();
+                this.renderBreadcrumbs();
                 $(window).bind('load scroll resize', this.updateSidebar);
                 this.showBrowseMenu(true);
                 return this;
