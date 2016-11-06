@@ -73,7 +73,7 @@ class GradeTestBase(SharedModuleStoreTestCase):
         self.request = get_request_for_user(UserFactory())
         self.client.login(username=self.request.user.username, password="test")
         self.course_structure = get_course_blocks(self.request.user, self.course.location)
-        self.subsection_grade_factory = SubsectionGradeFactory(self.request.user, self.course, self.course_structure)
+        self.subsection_grade_factory = SubsectionGradeFactory(self.request.user, self.course_structure)
         CourseEnrollment.enroll(self.request.user, self.course.id)
 
 
@@ -269,7 +269,7 @@ class SubsectionGradeTest(GradeTestBase):
         and that loading saved grades returns the same data.
         """
         # Create a grade that *isn't* saved to the database
-        input_grade = SubsectionGrade(self.sequence, self.course)
+        input_grade = SubsectionGrade(self.sequence)
         input_grade.init_from_structure(
             self.request.user,
             self.course_structure,
@@ -283,7 +283,7 @@ class SubsectionGradeTest(GradeTestBase):
         self.assertEqual(PersistentSubsectionGrade.objects.count(), 1)
 
         # load from db, and ensure output matches input
-        loaded_grade = SubsectionGrade(self.sequence, self.course)
+        loaded_grade = SubsectionGrade(self.sequence)
         saved_model = PersistentSubsectionGrade.read_grade(
             user_id=self.request.user.id,
             usage_key=self.sequence.location,
@@ -350,7 +350,6 @@ class TestMultipleProblemTypesSubsectionScores(SharedModuleStoreTestCase):
         subsection_factory = SubsectionGradeFactory(
             self.student,
             course_structure=self.course_structure,
-            course=self.course,
         )
         score = subsection_factory.create(self.seq1)
 
@@ -418,7 +417,6 @@ class TestVariedMetadata(ProblemSubmissionTestMixin, ModuleStoreTestCase):
         self.subsection_factory = SubsectionGradeFactory(
             self.request.user,
             course_structure=course_structure,
-            course=self.course,
         )
 
     def _get_altered_metadata(self, alterations):
@@ -552,7 +550,7 @@ class TestCourseGradeLogging(ProblemSubmissionTestMixin, SharedModuleStoreTestCa
         self.request = get_request_for_user(UserFactory())
         self.client.login(username=self.request.user.username, password="test")
         self.course_structure = get_course_blocks(self.request.user, self.course.location)
-        self.subsection_grade_factory = SubsectionGradeFactory(self.request.user, self.course, self.course_structure)
+        self.subsection_grade_factory = SubsectionGradeFactory(self.request.user, self.course_structure)
         CourseEnrollment.enroll(self.request.user, self.course.id)
 
     def _create_course_grade_and_check_logging(
