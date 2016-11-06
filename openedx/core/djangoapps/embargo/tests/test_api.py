@@ -25,13 +25,13 @@ from student.roles import (
     OrgStaffRole, OrgInstructorRole
 )
 
-from openedx.core.djangoapps.embargo.models import (
+from ..models import (
     RestrictedCourse, Country, CountryAccessRule,
 )
 
 from util.testing import UrlResetMixin
-from openedx.core.djangoapps.embargo import api as embargo_api
-from openedx.core.djangoapps.embargo.exceptions import InvalidAccessPoint
+import ..api as embargo_api
+from ..exceptions import InvalidAccessPoint
 from mock import patch
 
 

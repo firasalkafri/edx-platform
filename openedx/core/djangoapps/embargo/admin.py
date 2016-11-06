@@ -5,10 +5,10 @@ from django.contrib import admin
 import textwrap
 
 from config_models.admin import ConfigurationModelAdmin
-from openedx.core.djangoapps.embargo.models import (
+from .models import (
     IPFilter, CountryAccessRule, RestrictedCourse
 )
-from openedx.core.djangoapps.embargo.forms import (
+from .forms import (
     IPFilterForm, RestrictedCourseForm
 )
 

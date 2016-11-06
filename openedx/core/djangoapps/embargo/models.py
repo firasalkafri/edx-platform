@@ -27,8 +27,8 @@ from django_countries import countries
 from config_models.models import ConfigurationModel
 from openedx.core.djangoapps.xmodule_django.models import CourseKeyField, NoneToEmptyManager
 
-from openedx.core.djangoapps.embargo.exceptions import InvalidAccessPoint
-from openedx.core.djangoapps.embargo.messages import ENROLL_MESSAGES, COURSEWARE_MESSAGES
+from .exceptions import InvalidAccessPoint
+from .messages import ENROLL_MESSAGES, COURSEWARE_MESSAGES
 
 
 log = logging.getLogger(__name__)
