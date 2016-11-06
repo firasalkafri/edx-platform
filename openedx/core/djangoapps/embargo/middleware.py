@@ -36,7 +36,7 @@ from ipware.ip import get_ip
 from util.request import course_id_from_url
 
 from .models import IPFilter
-import .api as embargo_api
+from . import api as embargo_api
 
 
 log = logging.getLogger(__name__)
