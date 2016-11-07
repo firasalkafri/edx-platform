@@ -15,10 +15,10 @@
         };
 
         /**
-         * Store requests data for each annotable component and fetch
+         * Store requests data for each annotatable component and fetch
          * notes for them when request for each component is stored.
          *
-         * @param {object} data Request data for each annotable component
+         * @param {object} data Request data for each annotatable component
          */
         storeNotesRequestData = function(data) {
             searchRequestsData.push(data);
@@ -26,7 +26,7 @@
         };
 
         /**
-         * Fetch notes for annotable components only when desired
+         * Fetch notes for annotatable components only when desired
          * number of requests are stored.
          *
          */
@@ -59,21 +59,18 @@
             // /api/v1/search/?course_id={course_id}&user={user_id}&usage_id={usage_id}&usage_id={usage_id} ...
             searchEndpoint += usageIds.join('&');
 
-            $.ajax(
-                searchEndpoint,
-                settings
-            )
-            .done(function(jqXHR, textStatus, errorThrown) {
-                renderNotes(jqXHR, textStatus, errorThrown);
-            })
-            .fail(function(jqXHR) {
-                // `_action` is used by AnnotatorJS to construct error message
-                jqXHR._action = 'search';  // eslint-disable-line no-underscore-dangle, no-param-reassign
-                Annotator.Plugin.Store.prototype._onError(jqXHR);  // eslint-disable-line no-underscore-dangle
-            })
-            .always(function() {
-                cleanup();
-            });
+            $.ajax(searchEndpoint, settings)
+                .done(function(jqXHR) {
+                    renderNotes(jqXHR);
+                })
+                .fail(function(jqXHR) {
+                    // `_action` is used by AnnotatorJS to construct error message
+                    jqXHR._action = 'search';  // eslint-disable-line no-underscore-dangle, no-param-reassign
+                    Annotator.Plugin.Store.prototype._onError(jqXHR);  // eslint-disable-line no-underscore-dangle
+                })
+                .always(function() {
+                    cleanup();
+                });
         };
 
         /**
