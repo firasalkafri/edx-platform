@@ -26,6 +26,7 @@ import third_party_auth
 from third_party_auth import pipeline
 from third_party_auth.provider import Registry
 from third_party_auth.pipeline import active_provider_enforces_data_sharing, active_provider_requests_data_sharing
+from third_party_auth.models import ProviderConfig
 from django_comment_common.models import Role
 from edxmako.shortcuts import marketing_link
 from student.forms import get_registration_extension_form
@@ -284,7 +285,7 @@ class RegistrationView(APIView):
 
         # Add a data sharing consent dialog if it's requested
         if active_provider_requests_data_sharing(request):
-            enforced = active_provider_enforces_data_sharing(request)
+            enforced = active_provider_enforces_data_sharing(request, ProviderConfig.AT_LOGIN)
             provider_name = Registry.get_from_pipeline(pipeline.get(request)).name
 
             # data sharing consent checkbox is required only when provider enforces it and

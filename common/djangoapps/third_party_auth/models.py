@@ -279,26 +279,32 @@ class ProviderConfig(ConfigurationModel):
             "authentication using the correct link is still possible."
         ),
     )
-    DATA_CONSENT_DISABLED = 'disabled'
-    DATA_CONSENT_OPTIONAL = 'optional'
-    DATA_CONSENT_REQUIRED = 'required'
-    DATA_CONSENT_ENFORCED = 'enforced'
 
-    DATA_CONSENT_STATE_CHOICES = (
-        (DATA_CONSENT_DISABLED, 'Disabled'),
+    DATA_CONSENT_OPTIONAL = 'optional'
+    AT_LOGIN = 'at_login'
+    AT_ENROLLMENT = 'at_enrollment'
+    DATA_SHARING_CONSENT_CHOICES = (
         (DATA_CONSENT_OPTIONAL, 'Optional'),
-        (DATA_CONSENT_REQUIRED, 'Required'),
-        (DATA_CONSENT_ENFORCED, 'Enforced'),
+        (AT_LOGIN, 'At Login'),
+        (AT_ENROLLMENT, 'At Enrollment'),
     )
-    data_sharing_consent = models.CharField(
-        max_length=8,
-        blank=False,
-        choices=DATA_CONSENT_STATE_CHOICES,
-        default=DATA_CONSENT_DISABLED,
+
+    enable_data_sharing_consent = models.BooleanField(
+        default=False,
         help_text=_(
-            "This field is used to determine whether data sharing consent is requested, "
-            "required or enforced of users signing in using this SSO provider. If disabled, consent "
+            "This field is used to determine whether data sharing consent is enabled or "
+            "disabled of users signing in using this SSO provider. If disabled, consent "
             "will not be requested, and course data will not be shared."
+        )
+    )
+    enforce_data_sharing_consent = models.CharField(
+        max_length=25,
+        blank=False,
+        choices=DATA_SHARING_CONSENT_CHOICES,
+        default=DATA_CONSENT_OPTIONAL,
+        help_text=_(
+            "This field is used to determine the place from where user must consent to data "
+            "sharing in order to proceed."
         )
     )
     prefix = None  # used for provider_id. Set to a string value in subclass
@@ -318,32 +324,22 @@ class ProviderConfig(ConfigurationModel):
             raise ValidationError('Either an icon class or an icon image must be given (but not both)')
 
     @property
-    def enforce_data_sharing_consent(self):
-        """
-        Does the provider enforces data sharing consent ?
-
-        Difference between "require" and "enforce" is that
-        1. "require" will let the user to create an account associated with
-           the provider and it will still need data sharing consent for getting discount entitlements
-        2. "enforce" will not let the user create an account.
-
-        """
-        return self.data_sharing_consent == self.DATA_CONSENT_ENFORCED
-
-    @property
-    def require_data_sharing_consent(self):
-        """
-        Does the provider require data sharing consent?
-        """
-        return self.data_sharing_consent == self.DATA_CONSENT_REQUIRED
-
-    @property
-    def request_data_sharing_consent(self):
+    def requests_data_sharing_consent(self):
         """
         Does the provider request data sharing consent, regardless of whether
         or not it's required?
         """
-        return self.data_sharing_consent != self.DATA_CONSENT_DISABLED
+        return self.enable_data_sharing_consent
+
+    def enforces_data_sharing_consent(self, at):
+        """
+        Does the provider enforces data sharing consent at the given point ?
+
+        Args:
+            at (str): the point where to see data sharing consent state.
+            argument can either be "optional", 'at_login' or 'at_enrollment'
+        """
+        return self.requests_data_sharing_consent and self.enforce_data_sharing_consent == at
 
     @property
     def provider_id(self):

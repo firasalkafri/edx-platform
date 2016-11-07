@@ -15,7 +15,7 @@ import social
 from social.apps.django_app.views import complete
 from social.apps.django_app.utils import load_strategy, load_backend
 from social.utils import setting_name
-from .models import SAMLConfiguration, UserDataSharingConsentAudit
+from .models import SAMLConfiguration, UserDataSharingConsentAudit, ProviderConfig
 from .pipeline import get as get_running_pipeline, get_complete_url, get_real_social_auth_object
 from third_party_auth import pipeline
 from .provider import Registry
@@ -111,7 +111,9 @@ class GrantDataSharingPermissions(View):
             current_provider = Registry.get_from_pipeline(running_pipeline)
             if current_provider:
                 name = current_provider.name
-                data_sharing_consent = current_provider.data_sharing_consent
+                data_sharing_consent = \
+                    "required" if current_provider.enforces_data_sharing_consent(ProviderConfig.AT_LOGIN) \
+                    else "optional"
             else:
                 raise Http404
         else:
@@ -123,15 +125,15 @@ class GrantDataSharingPermissions(View):
             'csrftoken': csrf(request)['csrf_token'],
             "messages": {
                 "warning": {
-                    "required": _("Are you Sure ?\nIf you do not agree to share your data, you will not get any "
+                    "optional": _("Are you Sure ?\nIf you do not agree to share your data, you will not get any "
                                   "discounts from {provider}.").format(provider=name),
-                    "enforced": _("Are you Sure ?\nIf you do not agree to share your data, you will have to use "
+                    "required": _("Are you Sure ?\nIf you do not agree to share your data, you will have to use "
                                   "another account to access {platform}.").format(platform=platform_name)
                 },
                 "note": {
-                    "required": _("*{provider} requires data sharing consent; if consent is not provided, you will"
+                    "optional": _("*{provider} requests data sharing consent; if consent is not provided, you will"
                                   " not be able to get any discounts from {provider}.").format(provider=name),
-                    "enforced": _("*{provider} requires data sharing consent; if consent is not provided, you will"
+                    "required": _("*{provider} requires data sharing consent; if consent is not provided, you will"
                                   " be redirected to log in page.").format(provider=name)
                 }
             },
@@ -159,7 +161,7 @@ class GrantDataSharingPermissions(View):
 
             # Flush the session to avoid the possibility of accidental login and to abort the pipeline.
             # pipeline is flushed only if data sharing is enforced, in other cases let the user to login.
-            if pipeline.active_provider_enforces_data_sharing(request):
+            if pipeline.active_provider_enforces_data_sharing(request, ProviderConfig.AT_LOGIN):
                 request.session.flush()
                 return redirect(reverse('dashboard'))
 
